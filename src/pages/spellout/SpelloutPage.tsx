@@ -13,6 +13,7 @@ import { useRoom } from "../../online/useRoom";
 import { GameOverCard } from "../../components/game/GameOverCard";
 import { LobbyShell, type LobbyMode } from "../../components/game/LobbyShell";
 import { MatchLayout } from "../../components/game/MatchLayout";
+import { OptionRow } from "../../components/game/OptionRow";
 import { PlayerChip } from "../../components/game/PlayerChip";
 import { GamePageFrame } from "../GamePageFrame";
 import { SpelloutBoard } from "./SpelloutBoard";
@@ -32,6 +33,7 @@ export function SpelloutPage() {
   const [dictError, setDictError] = useState<string | null>(null);
   const [mode, setMode] = useState<LobbyMode>(roomParam ? "online" : "cpu");
   const [difficulty, setDifficulty] = useState<Difficulty>(2);
+  const [playerCount, setPlayerCount] = useState(2);
   const [setup, setSetup] = useState<MatchSetup | null>(null);
   const [matchKey, setMatchKey] = useState(0);
   const room = useRoom();
@@ -63,19 +65,37 @@ export function SpelloutPage() {
   }, [room.room?.status]);
 
   const startLocal = () => {
-    const seats: SeatConfig[] =
-      mode === "cpu"
-        ? [
-            { kind: "human", name: "You" },
-            { kind: "cpu", name: difficultyInfo(difficulty).persona, difficulty },
-          ]
-        : [
-            { kind: "human", name: "Player 1" },
-            { kind: "human", name: "Player 2" },
-          ];
+    const seats: SeatConfig[] = [];
+    if (mode === "cpu") {
+      const info = difficultyInfo(difficulty);
+      seats.push({ kind: "human", name: "You" });
+      for (let i = 1; i < playerCount; i++) {
+        seats.push({
+          kind: "cpu",
+          name: playerCount > 2 ? `${info.persona} ${i}` : info.persona,
+          difficulty,
+        });
+      }
+    } else {
+      for (let i = 0; i < playerCount; i++) {
+        seats.push({ kind: "human", name: `Player ${i + 1}` });
+      }
+    }
     setSetup({ seats, online: false });
     setMatchKey((k) => k + 1);
   };
+
+  const settings = (
+    <OptionRow
+      label="Players"
+      options={[
+        { value: 2, label: "2" },
+        { value: 3, label: "3" },
+      ]}
+      value={playerCount}
+      onChange={setPlayerCount}
+    />
+  );
 
   return (
     <GamePageFrame game={GAME} inMatch={Boolean(setup)} onExitMatch={() => setSetup(null)}>
@@ -95,6 +115,7 @@ export function SpelloutPage() {
           onModeChange={setMode}
           difficulty={difficulty}
           onDifficultyChange={setDifficulty}
+          settings={settings}
           onStart={startLocal}
           room={room}
           pendingJoinCode={roomParam ?? undefined}
@@ -102,10 +123,10 @@ export function SpelloutPage() {
             const engine = createSpelloutEngine(dict);
             await room.createRoom(
               "spellout",
-              {},
-              2,
+              { playerCount },
+              playerCount,
               name,
-              engine.serialize(createInitialSpellout()),
+              engine.serialize(createInitialSpellout(playerCount)),
             );
           }}
           onJoinRoom={async (code, name) => {
@@ -149,7 +170,7 @@ function SpelloutMatch({
 
   const match = useMatch<SpelloutState, SpelloutMove>({
     engine,
-    initialState: createInitialSpellout(),
+    initialState: createInitialSpellout(setup.seats.length),
     seats: setup.seats,
     chooseCpuMove: (state, _player, difficulty) =>
       chooseSpelloutLetter(dict, state, difficulty),

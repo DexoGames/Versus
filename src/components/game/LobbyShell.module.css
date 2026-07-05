@@ -17,7 +17,7 @@
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.14em;
-    color: var(--orange);
+    color: var(--accent);
     margin-bottom: 12px;
 }
 
@@ -41,7 +41,7 @@
     content: ">";
     position: absolute;
     left: 0;
-    color: var(--orange);
+    color: var(--accent);
     font-weight: 700;
 }
 
@@ -54,36 +54,59 @@
 .modes {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 12px;
 }
 
+/* Each mode owns a colour and leads with a filled icon badge, so the three
+   choices read as distinct rather than three identical outlines. */
 .mode {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 6px;
-    padding: 16px 18px;
-    background: transparent;
+    gap: 10px;
+    padding: 18px;
+    background: var(--black-soft);
     border: 2px solid var(--line-on-black);
     color: var(--bone);
     cursor: pointer;
     text-align: left;
-    transition: border-color 0.15s ease, background 0.15s ease;
-}
-
-.mode i {
-    color: var(--orange);
-    font-size: 1.1rem;
+    overflow: hidden;
+    transition: border-color 0.15s ease, transform 0.15s ease;
 }
 
 .mode:hover {
-    border-color: var(--bone-dim);
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--mode-color) 55%, transparent);
 }
 
-.modeSelected,
-.modeSelected:hover {
-    border-color: var(--orange);
-    background: rgba(255, 90, 54, 0.08);
+.modeIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: color-mix(in srgb, var(--mode-color) 16%, transparent);
+    color: var(--mode-color);
+    font-size: 1.15rem;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.modeSelected {
+    border-color: var(--mode-color);
+}
+
+.modeSelected::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    background: var(--mode-color);
+}
+
+.modeSelected .modeIcon {
+    background: var(--mode-color);
+    color: var(--black);
 }
 
 .modeLabel {
@@ -95,6 +118,8 @@
 .modeHint {
     font-family: var(--font-mono);
     font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
     color: var(--bone-dim);
 }
 
@@ -110,7 +135,7 @@
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.14em;
-    color: var(--orange);
+    color: var(--accent);
 }
 
 .startRow {
@@ -131,7 +156,7 @@
 }
 
 .input:focus {
-    border-color: var(--orange);
+    border-color: var(--accent);
 }
 
 .onlineActions {
@@ -162,11 +187,11 @@
 }
 
 .offlineNote code {
-    color: var(--orange);
+    color: var(--accent);
 }
 
 .code {
-    color: var(--orange);
+    color: var(--accent);
     font-family: var(--font-display);
     letter-spacing: 0.12em;
     margin-left: 6px;
@@ -181,7 +206,7 @@
 .shareLink {
     background: none;
     border: none;
-    color: var(--orange);
+    color: var(--accent);
     font-family: var(--font-mono);
     font-size: 0.72rem;
     cursor: pointer;
@@ -215,7 +240,7 @@
 
 .seatNum {
     font-weight: 700;
-    color: var(--orange);
+    color: var(--accent);
     font-size: 0.68rem;
 }
 
@@ -236,7 +261,7 @@
 .error {
     font-family: var(--font-mono);
     font-size: 0.75rem;
-    color: var(--orange);
+    color: var(--accent);
 }
 
 @media (max-width: 900px) {

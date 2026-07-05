@@ -10,10 +10,13 @@ import styles from "./LobbyShell.module.css";
 
 export type LobbyMode = "cpu" | "hotseat" | "online";
 
-const MODE_META: Record<LobbyMode, { label: string; icon: string; hint: string }> = {
-  cpu: { label: "vs CPU", icon: "fa-robot", hint: "Play against the machine" },
-  hotseat: { label: "Hotseat", icon: "fa-couch", hint: "Share this device" },
-  online: { label: "Online", icon: "fa-wifi", hint: "Room code with a friend" },
+const MODE_META: Record<
+  LobbyMode,
+  { label: string; icon: string; hint: string; color: string }
+> = {
+  cpu: { label: "vs CPU", icon: "fa-robot", hint: "Beat the machine", color: "var(--mode-cpu)" },
+  hotseat: { label: "Local", icon: "fa-couch", hint: "One device", color: "var(--mode-hotseat)" },
+  online: { label: "Online", icon: "fa-wifi", hint: "Room code", color: "var(--mode-online)" },
 };
 
 interface LobbyShellProps {
@@ -80,9 +83,12 @@ export function LobbyShell({
               key={m}
               type="button"
               className={cx(styles.mode, mode === m && styles.modeSelected)}
+              style={{ ["--mode-color" as string]: MODE_META[m].color }}
               onClick={() => onModeChange(m)}
             >
-              <i className={`fas ${MODE_META[m].icon}`}></i>
+              <span className={styles.modeIcon}>
+                <i className={`fas ${MODE_META[m].icon}`}></i>
+              </span>
               <span className={styles.modeLabel}>{MODE_META[m].label}</span>
               <span className={styles.modeHint}>{MODE_META[m].hint}</span>
             </button>
@@ -114,9 +120,7 @@ export function LobbyShell({
         {mode === "online" && !room.configured && (
           <div className={styles.block}>
             <p className={styles.offlineNote}>
-              Online play isn't configured on this build — it needs the
-              Firebase keys in <code>.env</code>. CPU and hotseat work fully
-              offline.
+              Online coming soon!
             </p>
           </div>
         )}

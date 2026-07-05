@@ -1,7 +1,7 @@
 .section {
     width: 100%;
     scroll-margin-top: 56px;
-    border-top: 2px solid var(--orange);
+    border-top: 2px solid var(--accent);
 }
 
 .cream {

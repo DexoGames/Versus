@@ -19,11 +19,19 @@ export function GameOverCard({
   onRematch,
   onBackToLobby,
 }: GameOverCardProps) {
-  const isDraw = winners.length !== 1;
-  const title = isDraw
-    ? "Draw!"
-    : `${seats[winners[0]]?.name ?? "Player"} wins!`;
-  const color = isDraw ? "var(--gold)" : PLAYER_COLORS[winners[0] % PLAYER_COLORS.length];
+  // A subset of players sharing the win (3p Spellout dead letter, shared
+  // frozen Gridlock) reads as a joint win, not a draw.
+  const isDraw = winners.length === 0 || winners.length === seats.length;
+  const title =
+    winners.length === 1
+      ? `${seats[winners[0]]?.name ?? "Player"} wins!`
+      : isDraw
+        ? "Draw!"
+        : `${winners.map((w) => seats[w]?.name ?? "Player").join(" & ")} win!`;
+  const color =
+    winners.length === 1
+      ? PLAYER_COLORS[winners[0] % PLAYER_COLORS.length]
+      : "var(--gold)";
 
   return (
     <div className={styles.overlay}>

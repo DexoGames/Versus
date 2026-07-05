@@ -28,11 +28,12 @@ export function chooseUndercutBid(
     return Math.max(rand, min);
   }
 
-  // Hard/Extreme: Unity's low-shaded pick (never reaches for a 6), plus, on
+  // Hard/Extreme: Unity's low-shaded pick (stays out of the high numbers —
+  // in the 1–10 game the value still lives low, the top is a trap), plus, on
   // Extreme, a read on opponents: if someone predictably sits on a number,
   // aim to undercut where their expected bid lands.
   const shaded = () => {
-    const upper = Math.min(max, 5); // Random.Range(min-2, min(max+1,6)) exclusive top
+    const upper = Math.max(Math.min(max, 6), min);
     let rand = randInt(min - 2, upper);
     if (rand < min) rand += 2;
     return Math.min(Math.max(rand, min), max);

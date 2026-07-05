@@ -56,6 +56,18 @@ describe("spellout engine", () => {
     expect(state.fragment).toBe("c"); // fragment stays at the last valid prefix
   });
 
+  it("three players rotate turns; a dead letter loses only for the mover", () => {
+    let state = createInitialSpellout(3);
+    state = engine.applyMove(state, "c"); // P0
+    expect(state.turn).toBe(1);
+    state = engine.applyMove(state, "a"); // P1
+    expect(state.turn).toBe(2);
+    state = engine.applyMove(state, "q"); // P2 kills the fragment
+    expect(state.over).toBe(true);
+    expect(state.winners).toEqual([0, 1]);
+    expect(state.reason).toBe("dead-letter");
+  });
+
   it("completing a word mid-branch still ends it only when unextendable", () => {
     let state = createInitialSpellout();
     for (const letter of ["d", "o", "t"]) state = engine.applyMove(state, letter);

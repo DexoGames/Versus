@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import type { GameInfo } from "../data/games";
 import { Navbar } from "../components/Navbar/Navbar";
-import { Footer } from "../components/Footer/Footer";
 import { Section } from "../components/Section/Section";
 import { SectionHeader } from "../components/SectionHeader/SectionHeader";
 import styles from "./GamePageFrame.module.css";
@@ -13,13 +12,14 @@ interface GamePageFrameProps {
   children: ReactNode;
 }
 
-/** Shared chrome for the three game pages: navbar, header band, footer. */
+/** Shared chrome for the three game pages: navbar + accent header band. */
 export function GamePageFrame({ game, inMatch, onExitMatch, children }: GamePageFrameProps) {
   return (
     <>
       <Navbar />
       <main className={styles.main}>
         <Section tone="black" className={styles.section}>
+          <p className={styles.subdomain}>{game.id}.dexo.games</p>
           <SectionHeader
             tone="black"
             icon={game.icon}
@@ -34,7 +34,6 @@ export function GamePageFrame({ game, inMatch, onExitMatch, children }: GamePage
           {children}
         </Section>
       </main>
-      <Footer />
     </>
   );
 }

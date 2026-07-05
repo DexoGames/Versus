@@ -50,8 +50,12 @@ export function difficultyInfo(level: Difficulty): DifficultyInfo {
   return DIFFICULTIES.find((d) => d.level === level) ?? DIFFICULTIES[0];
 }
 
-/** Per-player palette, drawn from the site's fixed design tokens. */
-export const PLAYER_COLORS = ["#ff5a36", "#3aabff", "#2fe089", "#ffc83a"];
+/**
+ * Per-player palette — kept distinct from the per-game theme accents
+ * (orange/blue/green) so a chain or bid token never blends into the page.
+ * Mirrors --player-* in globals.css.
+ */
+export const PLAYER_COLORS = ["#ff4f81", "#35d0be", "#b06bff", "#ffc83a"];
 
 export interface SeatConfig {
   kind: PlayerKind;

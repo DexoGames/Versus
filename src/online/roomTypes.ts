@@ -13,7 +13,7 @@ export interface RoomSeat {
 export interface RoomDoc {
   game: GameId;
   status: RoomStatus;
-  /** Game-specific settings: gridSize/playerCount or scoreAim. */
+  /** Game-specific settings: gridSize/playerCount or matchTarget. */
   config: Json;
   seats: RoomSeat[];
   /** Seats the game needs before the host can start. */

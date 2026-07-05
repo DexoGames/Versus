@@ -15,27 +15,28 @@
 }
 
 .primary {
-    background: var(--orange);
-    color: var(--orange-ink);
-    border-color: var(--orange);
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-color: var(--accent);
 }
 
 .primary:hover {
-    background: var(--orange-deep);
-    border-color: var(--orange-deep);
+    background: var(--accent-deep);
+    border-color: var(--accent-deep);
 }
 
-/* inherits the surrounding text colour so it works on cream or black */
+/* Neutral outline — the accent is reserved for the single primary action on
+   screen, so secondary actions read as quieter rather than a second accent. */
 .secondary {
     background: transparent;
-    color: currentColor;
-    border-color: currentColor;
+    color: var(--bone);
+    border-color: var(--line-on-black);
 }
 
 .secondary:hover {
-    background: var(--orange);
-    color: var(--orange-ink);
-    border-color: var(--orange);
+    background: var(--bone);
+    color: var(--black);
+    border-color: var(--bone);
 }
 
 .disabled {

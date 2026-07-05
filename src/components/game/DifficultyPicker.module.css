@@ -1,50 +1,70 @@
-.grid {
+.ramp {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
 }
 
-.option {
+.tier {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding: 14px 16px;
-    text-align: left;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 14px 16px;
     background: transparent;
     border: 2px solid var(--line-on-black);
+    border-bottom-width: 4px;
+    border-bottom-color: color-mix(in srgb, var(--tier) 45%, transparent);
     color: var(--bone);
     cursor: pointer;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
 
-.option:hover {
-    border-color: var(--bone-dim);
+.tier:hover {
+    transform: translateY(-2px);
+    border-color: var(--tier);
 }
 
-.selected,
-.selected:hover {
-    border-color: var(--orange);
-    background: rgba(255, 90, 54, 0.08);
+.selected {
+    border-color: var(--tier);
+    border-bottom-color: var(--tier);
+    background: color-mix(in srgb, var(--tier) 12%, transparent);
+}
+
+.bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 22px;
+}
+
+.bar {
+    width: 5px;
+    background: var(--line-on-black);
+    transition: background 0.15s ease;
+}
+
+.barOn {
+    background: var(--tier);
 }
 
 .label {
-    font-family: var(--font-mono);
-    font-weight: 700;
-    font-size: 0.72rem;
+    font-family: var(--font-display);
+    font-size: 0.98rem;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--orange);
+    line-height: 1;
+    color: var(--tier);
 }
 
 .persona {
-    font-family: var(--font-display);
-    font-size: 1.05rem;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
     text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--bone-dim);
 }
 
-.tagline {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    line-height: 1.45;
-    color: var(--bone-dim);
+@media (max-width: 560px) {
+    .ramp {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }

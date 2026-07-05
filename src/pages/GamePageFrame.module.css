@@ -10,6 +10,16 @@
     padding-bottom: 24px;
 }
 
+.subdomain {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.66rem;
+    text-transform: lowercase;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin-bottom: 10px;
+}
+
 .backLink {
     display: inline-flex;
     align-items: center;
@@ -29,5 +39,5 @@
 }
 
 .backLink:hover {
-    color: var(--orange);
+    color: var(--accent);
 }

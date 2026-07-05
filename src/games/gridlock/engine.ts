@@ -9,15 +9,25 @@ import type { GridlockMove, GridlockState, Point } from "./types";
 
 export { createInitialState as createInitialGridlock };
 
-function simToState(state: GridlockState, simResult: ReturnType<typeof buildSim>, captured: number[], mover: number): GridlockState {
+function simToState(
+  state: GridlockState,
+  simResult: ReturnType<typeof buildSim>,
+  capturedLoop: Point[] | null,
+  mover: number,
+): GridlockState {
   return {
     config: state.config,
     chains: simResult.chains.map((c) => c.map((p) => ({ x: p.x, y: p.y }))),
-    cellOwner: Array.from(simResult.cellOwner),
-    regions:
-      captured.length > 0
-        ? [...state.regions, { id: state.regions.length, player: mover, cells: captured }]
-        : state.regions,
+    regions: capturedLoop
+      ? [
+          ...state.regions,
+          {
+            id: state.regions.length,
+            player: mover,
+            vertices: capturedLoop.map((p) => ({ x: p.x, y: p.y })),
+          },
+        ]
+      : state.regions,
     scores: simResult.scores.slice(),
     currentPlayer: simResult.currentPlayer,
     turnCount: simResult.turnCount,
@@ -46,7 +56,7 @@ export const gridlockEngine: GameEngine<GridlockState, GridlockMove> = {
     }
     const mover = sim.currentPlayer;
     const undo = applySimMove(sim, move);
-    return simToState(state, sim, undo.capturedCells, mover);
+    return simToState(state, sim, undo.areaVertices, mover);
   },
 
   checkWinner(state): WinResult {

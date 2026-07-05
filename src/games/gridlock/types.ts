@@ -12,18 +12,20 @@ export interface GridlockConfig {
 export interface CapturedRegion {
   id: number;
   player: number;
-  /** Cell indices (cy * (gridSize-1) + cx) captured by this closing move. */
-  cells: number[];
+  /**
+   * The captured loop as a closed dot polygon (implicitly closed back to
+   * vertices[0]). May include diagonal edges — triangles score 0.5.
+   */
+  vertices: Point[];
 }
 
 export interface GridlockState {
   config: GridlockConfig;
   /** Each player's chain of visited dots, oldest first. Tail = current head. */
   chains: Point[][];
-  /** Owner per cell, -1 = unclaimed. Index = cy * (gridSize-1) + cx. */
-  cellOwner: number[];
-  /** Capture events in order, for rendering + score breakdown. */
+  /** Capture events in creation order — order IS claim priority for overlaps. */
   regions: CapturedRegion[];
+  /** Fractional scores in 0.25 steps (quarter-cell sampling). */
   scores: number[];
   currentPlayer: number;
   /**

@@ -14,8 +14,9 @@ import type { SpelloutMove, SpelloutState } from "./types";
 
 const ALPHABET = "abcdefghijklmnopqrstuvwxyz".split("");
 
-export function createInitialSpellout(): SpelloutState {
+export function createInitialSpellout(playerCount = 2): SpelloutState {
   return {
+    playerCount,
     fragment: "",
     turn: 0,
     remaining: 0,
@@ -46,14 +47,17 @@ export function createSpelloutEngine(
       const fragment = state.fragment + letter;
       const [lo, hi] = dict.range(fragment);
       const remaining = hi - lo;
+      const pc = state.playerCount ?? 2;
 
-      // Dead prefix: the mover loses, previous player wins.
+      // Dead prefix: the mover loses, everyone else shares the win.
       if (remaining === 0) {
+        const winners = [];
+        for (let i = 1; i < pc; i++) winners.push((state.turn + i) % pc);
         return {
           ...state,
           remaining: 0,
           over: true,
-          winners: [(state.turn + 1) % 2],
+          winners: winners.sort((a, b) => a - b),
           reason: "dead-letter",
           deadLetter: letter,
         };
@@ -76,7 +80,7 @@ export function createSpelloutEngine(
         ...state,
         fragment,
         remaining,
-        turn: (state.turn + 1) % 2,
+        turn: (state.turn + 1) % pc,
         deadLetter: null,
       };
     },
@@ -87,6 +91,7 @@ export function createSpelloutEngine(
     },
 
     serialize: (state) => ({ ...state }) as unknown as Json,
-    deserialize: (json) => json as unknown as SpelloutState,
+    deserialize: (json) =>
+      ({ playerCount: 2, ...(json as object) }) as unknown as SpelloutState,
   };
 }

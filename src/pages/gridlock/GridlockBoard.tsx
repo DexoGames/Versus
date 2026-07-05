@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { PLAYER_COLORS } from "../../games/types";
+import { regionValues } from "../../games/gridlock/sim";
 import type { GridlockState, Point } from "../../games/gridlock/types";
 import styles from "./GridlockBoard.module.css";
 
@@ -15,8 +16,9 @@ interface GridlockBoardProps {
 
 /**
  * SVG board: dots as small squares, chains as coloured polylines, captured
- * cells as translucent fills that sweep in. y is flipped so (0,0) sits
- * bottom-left, matching the Unity layout (P0 starts bottom-right).
+ * loops as translucent polygons (diagonal triangles included) that sweep in.
+ * y is flipped so (0,0) sits bottom-left, matching the Unity layout (P0
+ * starts bottom-right).
  */
 export function GridlockBoard({ state, legalMoves, onMove }: GridlockBoardProps) {
   const n = state.config.gridSize;
@@ -29,29 +31,9 @@ export function GridlockBoard({ state, legalMoves, onMove }: GridlockBoardProps)
 
   const heads = state.chains.map((chain) => chain[chain.length - 1]);
 
-  // Cells captured by the most recent region sweep in with a slight stagger.
+  // Points each capture was worth (earlier regions claim overlaps first).
+  const values = useMemo(() => regionValues(state), [state]);
   const latestRegion = state.regions[state.regions.length - 1];
-
-  const cellRects = useMemo(() => {
-    const nc = n - 1;
-    const rects: Array<{ cx: number; cy: number; owner: number; fresh: boolean; order: number }> = [];
-    for (let cy = 0; cy < nc; cy++) {
-      for (let cx = 0; cx < nc; cx++) {
-        const owner = state.cellOwner[cy * nc + cx];
-        if (owner < 0) continue;
-        const cellIndex = cy * nc + cx;
-        const freshIdx = latestRegion ? latestRegion.cells.indexOf(cellIndex) : -1;
-        rects.push({
-          cx,
-          cy,
-          owner,
-          fresh: freshIdx >= 0,
-          order: Math.max(freshIdx, 0),
-        });
-      }
-    }
-    return rects;
-  }, [state.cellOwner, latestRegion, n]);
 
   return (
     <svg
@@ -60,19 +42,23 @@ export function GridlockBoard({ state, legalMoves, onMove }: GridlockBoardProps)
       role="img"
       aria-label="Gridlock board"
     >
-      {/* captured cells */}
-      {cellRects.map(({ cx, cy, owner, fresh, order }) => {
-        const topLeft = toSvg({ x: cx, y: cy + 1 });
+      {/* captured loops — later regions first so earlier ones paint on top,
+          matching their claim priority */}
+      {[...state.regions].reverse().map((region) => {
+        const fresh = region === latestRegion;
+        const pts = region.vertices
+          .map((v) => {
+            const s = toSvg(v);
+            return `${s.x},${s.y}`;
+          })
+          .join(" ");
         return (
-          <rect
-            key={`cell-${cx}-${cy}`}
+          <polygon
+            key={`region-${region.id}`}
             className={fresh ? styles.cellFresh : styles.cell}
-            style={fresh ? { animationDelay: `${order * 60}ms` } : undefined}
-            x={topLeft.x}
-            y={topLeft.y}
-            width={CELL}
-            height={CELL}
-            fill={PLAYER_COLORS[owner % PLAYER_COLORS.length]}
+            points={pts}
+            fill={PLAYER_COLORS[region.player % PLAYER_COLORS.length]}
+            fillRule="evenodd"
           />
         );
       })}
@@ -173,6 +159,34 @@ export function GridlockBoard({ state, legalMoves, onMove }: GridlockBoardProps)
           </g>
         );
       })}
+
+      {/* score popup floating out of the freshest capture */}
+      {latestRegion && (
+        (() => {
+          const centroid = latestRegion.vertices.reduce(
+            (acc, v) => {
+              const s = toSvg(v);
+              return { x: acc.x + s.x, y: acc.y + s.y };
+            },
+            { x: 0, y: 0 },
+          );
+          const cx = centroid.x / latestRegion.vertices.length;
+          const cy = centroid.y / latestRegion.vertices.length;
+          const value = values[state.regions.length - 1];
+          return (
+            <text
+              key={`pop-${latestRegion.id}`}
+              className={styles.scorePop}
+              x={cx}
+              y={cy}
+              textAnchor="middle"
+              fill={PLAYER_COLORS[latestRegion.player % PLAYER_COLORS.length]}
+            >
+              +{value}
+            </text>
+          );
+        })()
+      )}
     </svg>
   );
 }

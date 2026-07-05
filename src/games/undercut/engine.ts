@@ -2,19 +2,27 @@ import type { GameEngine, Json, WinResult } from "../types";
 import type { UndercutConfig, UndercutMove, UndercutState } from "./types";
 
 /**
- * Undercut: three players bid 1–6 simultaneously each round. Lowest bid wins,
+ * Undercut: 2–4 players bid 1–10 simultaneously each hand. Lowest bid wins,
  * unless someone sits exactly one higher — they undercut and steal the win.
  * Undercuts chain upward when bids form a run (1,2,3 → the 3 wins), exactly
  * as the Unity CalculateWinner does. The winner scores their own bid; a tie
- * at the winning value scores nobody. After round one, bids may only move ±1
- * from your previous bid. First to the target score wins.
+ * at the winning value scores nobody. After the first hand of a round, bids
+ * may only move ±1 from your previous bid.
+ *
+ * A round is played to `roundTarget` points (10). Winning a round banks a
+ * round win and resets points and bid ranges; first to `matchTarget` round
+ * wins (1/3/5) takes the match.
  */
+
+export const BID_MAX = 10;
 
 export function createInitial(config: UndercutConfig): UndercutState {
   const n = config.playerCount;
   return {
     config,
     scores: new Array(n).fill(0),
+    roundWins: new Array(n).fill(0),
+    rounds: [],
     lastBids: new Array(n).fill(0),
     pendingBids: new Array(n).fill(null),
     history: [],
@@ -23,11 +31,11 @@ export function createInitial(config: UndercutConfig): UndercutState {
   };
 }
 
-/** Allowed bid range for a seat: full 1–6 on round one, else ±1 of last bid. */
+/** Allowed bid range for a seat: full 1–10 on a fresh round, else ±1 of last bid. */
 export function bidRange(state: UndercutState, player: number): [number, number] {
   const last = state.lastBids[player];
-  if (last === 0) return [1, 6];
-  return [Math.max(last - 1, 1), Math.min(last + 1, 6)];
+  if (last === 0) return [1, BID_MAX];
+  return [Math.max(last - 1, 1), Math.min(last + 1, BID_MAX)];
 }
 
 /** Faithful port of Undercut.CalculateWinner, including the chained undercut. */
@@ -77,39 +85,60 @@ function applyMove(state: UndercutState, move: UndercutMove): UndercutState {
   const pendingBids = state.pendingBids.slice();
   pendingBids[player] = move;
 
-  // Round still collecting bids.
+  // Hand still collecting bids.
   if (pendingBids.some((b) => b === null)) {
     return { ...state, pendingBids };
   }
 
-  // All bids in: resolve.
+  // All bids in: resolve the hand.
+  const n = state.config.playerCount;
   const bids = pendingBids as number[];
   const { winner, winningNumber } = resolveRound(bids);
 
-  const scores = state.scores.slice();
+  let scores = state.scores.slice();
   if (winner >= 0) scores[winner] += winningNumber;
 
   const history = [...state.history, { bids: bids.slice(), winner, winningNumber }];
+  let roundWins = state.roundWins;
+  let rounds = state.rounds;
+  let lastBids = bids.slice();
+  let over = false;
+  let winners: number[] = [];
 
-  const winners = scores
-    .map((s, i) => ({ s, i }))
-    .filter(({ s }) => s >= state.config.scoreAim)
-    .map(({ i }) => i);
+  // Round won: bank it, then reset points and bid ranges for the next round.
+  if (winner >= 0 && scores[winner] >= state.config.roundTarget) {
+    roundWins = state.roundWins.slice();
+    roundWins[winner]++;
+    const priorHands = state.rounds.reduce((a, r) => a + r.hands, 0);
+    rounds = [
+      ...state.rounds,
+      { winner, hands: history.length - priorHands, points: scores },
+    ];
+    if (roundWins[winner] >= state.config.matchTarget) {
+      over = true;
+      winners = [winner];
+    } else {
+      scores = new Array(n).fill(0);
+      lastBids = new Array(n).fill(0);
+    }
+  }
 
   return {
     ...state,
     scores,
-    lastBids: bids.slice(),
-    pendingBids: new Array(state.config.playerCount).fill(null),
+    roundWins,
+    rounds,
+    lastBids,
+    pendingBids: new Array(n).fill(null),
     history,
-    over: winners.length > 0,
+    over,
     winners,
   };
 }
 
 function checkWinner(state: UndercutState): WinResult {
   if (!state.over) return { over: false, winners: [], reason: null };
-  return { over: true, winners: state.winners, reason: "score-aim" };
+  return { over: true, winners: state.winners, reason: "match-target" };
 }
 
 export const undercutEngine: GameEngine<UndercutState, UndercutMove> = {

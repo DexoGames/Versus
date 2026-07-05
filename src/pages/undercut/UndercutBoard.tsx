@@ -1,4 +1,6 @@
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PLAYER_COLORS, type SeatConfig } from "../../games/types";
+import { BID_MAX } from "../../games/undercut/engine";
 import type { RoundRecord, UndercutState } from "../../games/undercut/types";
 import { cx } from "../../lib/cx";
 import styles from "./UndercutBoard.module.css";
@@ -6,10 +8,12 @@ import styles from "./UndercutBoard.module.css";
 interface UndercutBoardProps {
   state: UndercutState;
   seats: SeatConfig[];
-  /** Which seats have a bid locked in this round (without showing values). */
+  /** Which seats have a bid locked in this hand (without showing values). */
   lockedSeats: boolean[];
   /** Enabled pad range for the local bidder, or null to hide the pad. */
   padRange: [number, number] | null;
+  /** The local bidder's previous bid (0 on a fresh round) — drives lower/hold/higher. */
+  padAnchor: number;
   padLabel: string;
   onBid: (n: number) => void;
   /** Hotseat privacy gate: who must confirm before the pad shows. */
@@ -17,78 +21,229 @@ interface UndercutBoardProps {
   onGateOpen: () => void;
 }
 
+interface RevealStep {
+  /** Bid value holding the crown after this step. */
+  crown: number;
+  kind: "lead" | "safe" | "steal" | "result";
+  label: string;
+}
+
+const STEP_MS = 850;
+const axisPos = (value: number) => ((value - 1) / (BID_MAX - 1)) * 100;
+
+/**
+ * The reveal narrates the rule the way it plays: the highest bid leads, and a
+ * lower bid steals the crown only by dropping MORE than 1 below the bid above
+ * it. Walking the distinct values downward reproduces resolveRound exactly.
+ */
+function buildRevealSteps(hand: RoundRecord, seats: SeatConfig[]): RevealStep[] {
+  const values = [...new Set(hand.bids)].sort((a, b) => b - a);
+  const nameAt = (v: number) =>
+    hand.bids
+      .map((b, i) => (b === v ? (seats[i]?.name ?? `P${i + 1}`) : null))
+      .filter(Boolean)
+      .join(" & ");
+
+  const steps: RevealStep[] = [];
+  let crown = values[0];
+  steps.push({
+    crown,
+    kind: "lead",
+    label: `${crown} is the highest — ${nameAt(crown)} leads`,
+  });
+  for (let i = 1; i < values.length; i++) {
+    const v = values[i];
+    const gap = values[i - 1] - v;
+    if (gap > 1) {
+      crown = v;
+      steps.push({
+        crown,
+        kind: "steal",
+        label: `UNDERCUT! ${nameAt(v)} ducks ${gap} below and steals it`,
+      });
+    } else {
+      steps.push({
+        crown,
+        kind: "safe",
+        label: `${v} is only 1 under — too close to undercut`,
+      });
+    }
+  }
+  steps.push({
+    crown: hand.winningNumber,
+    kind: "result",
+    label:
+      hand.winner >= 0
+        ? `${seats[hand.winner]?.name ?? "Player"} banks ${hand.winningNumber} point${hand.winningNumber > 1 ? "s" : ""}`
+        : `Tie at ${hand.winningNumber} — nobody scores`,
+  });
+  return steps;
+}
+
 export function UndercutBoard({
   state,
   seats,
   lockedSeats,
   padRange,
+  padAnchor,
   padLabel,
   onBid,
   gate,
   onGateOpen,
 }: UndercutBoardProps) {
-  const aim = state.config.scoreAim;
-  const lastRound: RoundRecord | null =
+  const { roundTarget, matchTarget } = state.config;
+  const lastHand: RoundRecord | null =
     state.history.length > 0 ? state.history[state.history.length - 1] : null;
+
+  const steps = useMemo(
+    () => (lastHand ? buildRevealSteps(lastHand, seats) : []),
+    [lastHand, seats],
+  );
+
+  // Step the reveal narration forward each time a hand lands.
+  const [stepIdx, setStepIdx] = useState(0);
+  useEffect(() => {
+    if (steps.length === 0) return;
+    setStepIdx(0);
+    const iv = setInterval(() => {
+      setStepIdx((s) => (s >= steps.length - 1 ? s : s + 1));
+    }, STEP_MS);
+    return () => clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.history.length]);
+
+  const step = steps.length > 0 ? steps[Math.min(stepIdx, steps.length - 1)] : null;
+  const revealDone = step?.kind === "result";
+  const drawHand = revealDone && lastHand !== null && lastHand.winner === -1;
+
+  // Round banner: fires once the reveal narration has finished.
+  const [banner, setBanner] = useState<{ round: number; winner: number } | null>(null);
+  const prevRounds = useRef(state.rounds.length);
+  useEffect(() => {
+    if (state.rounds.length > prevRounds.current) {
+      prevRounds.current = state.rounds.length;
+      const result = state.rounds[state.rounds.length - 1];
+      const revealTime = steps.length * STEP_MS + 300;
+      const show = setTimeout(
+        () => setBanner({ round: state.rounds.length, winner: result.winner }),
+        revealTime,
+      );
+      const hide = setTimeout(() => setBanner(null), revealTime + 2600);
+      return () => {
+        clearTimeout(show);
+        clearTimeout(hide);
+      };
+    }
+    prevRounds.current = state.rounds.length;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.rounds.length]);
 
   return (
     <div className={styles.board}>
-      {/* score sliders */}
-      <div className={styles.scores}>
-        {seats.map((seat, i) => (
-          <div key={i} className={styles.scoreRow}>
-            <span className={styles.scoreName} style={{ color: PLAYER_COLORS[i] }}>
-              {seat.name}
-            </span>
-            <div className={styles.bar}>
-              <div
-                className={styles.barFill}
-                style={{
-                  width: `${Math.min(100, (state.scores[i] / aim) * 100)}%`,
-                  background: PLAYER_COLORS[i],
-                }}
-              />
-              {lockedSeats[i] && !state.over && (
-                <span className={styles.locked}>
-                  <i className="fas fa-lock"></i>
-                </span>
-              )}
+      {/* single standings strip — the only place scores live */}
+      <div className={styles.standings}>
+        <span className={styles.roundTag}>Round {state.rounds.length + 1}</span>
+        <div className={styles.scoreList}>
+          {seats.map((seat, i) => (
+            <div key={i} className={styles.scoreRow}>
+              <span className={styles.scoreName} style={{ color: PLAYER_COLORS[i] }}>
+                {seat.name}
+              </span>
+              <span className={styles.pips}>
+                {Array.from({ length: matchTarget }, (_, p) => (
+                  <span
+                    key={p}
+                    className={cx(styles.pip, p < state.roundWins[i] && styles.pipWon)}
+                    style={
+                      p < state.roundWins[i]
+                        ? { background: PLAYER_COLORS[i], borderColor: PLAYER_COLORS[i] }
+                        : undefined
+                    }
+                  />
+                ))}
+              </span>
+              <span className={styles.track}>
+                <span
+                  className={styles.trackFill}
+                  style={{
+                    width: `${Math.min(100, (state.scores[i] / roundTarget) * 100)}%`,
+                    background: PLAYER_COLORS[i],
+                  }}
+                />
+              </span>
+              <span className={styles.scoreNum}>
+                {state.scores[i]}
+                {lockedSeats[i] && !state.over && (
+                  <i className={cx("fas fa-lock", styles.lock)}></i>
+                )}
+              </span>
             </div>
-            <span className={styles.scoreNum}>
-              {state.scores[i]}
-              <span className={styles.scoreAim}>/{aim}</span>
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {/* last round reveal */}
-      {lastRound && (
+      {/* last hand, played out on a number line (no boxes) */}
+      {lastHand && (
         <div className={styles.reveal} key={state.history.length}>
-          <p className={styles.revealTitle}>Round {state.history.length}</p>
-          <div className={styles.revealRow}>
-            {lastRound.bids.map((bid, i) => (
+          <div className={styles.axis}>
+            {step && (
               <div
-                key={i}
-                className={cx(
-                  styles.revealBid,
-                  lastRound.winner === i && styles.revealWinner,
-                  lastRound.winner === -1 &&
-                    bid === lastRound.winningNumber &&
-                    styles.revealDraw,
-                )}
-                style={{ ["--bid-color" as string]: PLAYER_COLORS[i] }}
+                className={cx(styles.crown, drawHand && styles.crownDraw)}
+                style={{ left: `${axisPos(step.crown)}%` }}
               >
-                <span className={styles.revealNum}>{bid}</span>
-                <span className={styles.revealName}>{seats[i].name}</span>
+                <i className="fas fa-crown"></i>
               </div>
-            ))}
+            )}
+            <div className={styles.axisLine} />
+            {Array.from({ length: BID_MAX }, (_, i) => {
+              const value = i + 1;
+              const bidders = lastHand.bids
+                .map((b, seatIdx) => (b === value ? seatIdx : -1))
+                .filter((s) => s >= 0);
+              return (
+                <div
+                  key={value}
+                  className={styles.axisSlot}
+                  style={{ left: `${axisPos(value)}%` }}
+                >
+                  <span className={styles.tokens}>
+                    {bidders.map((seatIdx) => (
+                      <span
+                        key={seatIdx}
+                        className={cx(
+                          styles.token,
+                          revealDone && lastHand.winner === seatIdx && styles.tokenWinner,
+                          drawHand && value === lastHand.winningNumber && styles.tokenDraw,
+                        )}
+                        style={{
+                          ["--pc" as string]: PLAYER_COLORS[seatIdx],
+                          animationDelay: `${seatIdx * 100}ms`,
+                        }}
+                        title={seats[seatIdx]?.name}
+                      >
+                        {value}
+                      </span>
+                    ))}
+                  </span>
+                  <span className={cx(styles.tick, bidders.length > 0 && styles.tickUsed)}>
+                    {value}
+                  </span>
+                </div>
+              );
+            })}
           </div>
-          <p className={styles.revealOutcome}>
-            {lastRound.winner >= 0
-              ? `${seats[lastRound.winner].name} takes ${lastRound.winningNumber} point${lastRound.winningNumber > 1 ? "s" : ""}`
-              : `Tie at ${lastRound.winningNumber} — nobody scores`}
-          </p>
+          {step && (
+            <p
+              key={stepIdx}
+              className={cx(
+                styles.stepLabel,
+                step.kind === "steal" && styles.stepSteal,
+                step.kind === "result" && styles.stepResult,
+              )}
+            >
+              {step.label}
+            </p>
+          )}
         </div>
       )}
 
@@ -102,28 +257,111 @@ export function UndercutBoard({
           ) : padRange ? (
             <>
               <p className={styles.padLabel}>{padLabel}</p>
-              <div className={styles.pad}>
-                {[1, 2, 3, 4, 5, 6].map((n) => {
-                  const enabled = n >= padRange[0] && n <= padRange[1];
-                  return (
-                    <button
-                      key={n}
-                      type="button"
-                      className={styles.padKey}
-                      disabled={!enabled}
-                      onClick={() => onBid(n)}
-                    >
-                      {n}
-                    </button>
-                  );
-                })}
-              </div>
+              {padAnchor > 0 ? (
+                <ChoicePad
+                  anchor={padAnchor}
+                  range={padRange}
+                  onBid={onBid}
+                />
+              ) : (
+                <LinePad range={padRange} onBid={onBid} />
+              )}
             </>
           ) : (
             <p className={styles.padLabel}>{padLabel}</p>
           )}
         </div>
       )}
+
+      {/* round win banner */}
+      {banner && (
+        <div className={styles.banner} key={banner.round}>
+          <div
+            className={styles.bannerCard}
+            style={{ ["--pc" as string]: PLAYER_COLORS[banner.winner] }}
+          >
+            <p className={styles.bannerKicker}>Round {banner.round}</p>
+            <p className={styles.bannerTitle}>
+              {seats[banner.winner]?.name ?? "Player"} takes the round!
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Round one: the full 1–10 line, high numbers visibly rarer (smaller). */
+function LinePad({
+  range,
+  onBid,
+}: {
+  range: [number, number];
+  onBid: (n: number) => void;
+}) {
+  return (
+    <div className={styles.linePad}>
+      {Array.from({ length: BID_MAX }, (_, i) => {
+        const n = i + 1;
+        const enabled = n >= range[0] && n <= range[1];
+        const shrink = Math.max(0, n - 5);
+        const size = 54 - shrink * 4;
+        return (
+          <button
+            key={n}
+            type="button"
+            className={styles.lineKey}
+            disabled={!enabled}
+            style={{ width: size, height: size, fontSize: `${1.35 - shrink * 0.08}rem` }}
+            onClick={() => onBid(n)}
+          >
+            {n}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * After round one you may only move ±1, so the choice is really lower / hold /
+ * higher. Show exactly those, each visually distinct.
+ */
+function ChoicePad({
+  anchor,
+  range,
+  onBid,
+}: {
+  anchor: number;
+  range: [number, number];
+  onBid: (n: number) => void;
+}) {
+  const all: Array<{
+    n: number;
+    kind: "lower" | "hold" | "higher";
+    icon: string;
+    label: string;
+  }> = [
+    { n: anchor - 1, kind: "lower", icon: "fa-caret-down", label: "Lower" },
+    { n: anchor, kind: "hold", icon: "fa-minus", label: "Hold" },
+    { n: anchor + 1, kind: "higher", icon: "fa-caret-up", label: "Higher" },
+  ];
+  const choices = all.filter((c) => c.n >= range[0] && c.n <= range[1]);
+
+  return (
+    <div className={styles.choicePad}>
+      {choices.map((c) => (
+        <button
+          key={c.kind}
+          type="button"
+          className={cx(styles.choice, styles[c.kind])}
+          onClick={() => onBid(c.n)}
+        >
+          <i className={`fas ${c.icon} ${styles.choiceIcon}`}></i>
+          <span className={styles.choiceNum}>{c.n}</span>
+          <span className={styles.choiceLabel}>{c.label}</span>
+        </button>
+      ))}
     </div>
   );
 }

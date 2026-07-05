@@ -1,7 +1,9 @@
 export interface SpelloutState {
+  /** Seats in the duel (2 by default, 3 supported). */
+  playerCount: number;
   /** The growing shared fragment (always a valid prefix while play continues). */
   fragment: string;
-  /** Player to act (0 or 1). */
+  /** Player to act. */
   turn: number;
   /** How many dictionary words the fragment can still become. */
   remaining: number;

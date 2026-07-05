@@ -13,16 +13,15 @@ import { GameOverCard } from "../../components/game/GameOverCard";
 import { LobbyShell, type LobbyMode } from "../../components/game/LobbyShell";
 import { MatchLayout } from "../../components/game/MatchLayout";
 import { OptionRow } from "../../components/game/OptionRow";
-import { PlayerChip } from "../../components/game/PlayerChip";
 import { GamePageFrame } from "../GamePageFrame";
 import { UndercutBoard } from "./UndercutBoard";
 
 const GAME = GAMES_DATA.find((g) => g.id === "undercut")!;
-const PLAYER_COUNT = 3;
+const ROUND_TARGET = 10;
 
 interface MatchSetup {
   seats: SeatConfig[];
-  scoreAim: number;
+  matchTarget: number;
   online: boolean;
 }
 
@@ -32,7 +31,8 @@ export function UndercutPage() {
 
   const [mode, setMode] = useState<LobbyMode>(roomParam ? "online" : "cpu");
   const [difficulty, setDifficulty] = useState<Difficulty>(2);
-  const [scoreAim, setScoreAim] = useState(25);
+  const [playerCount, setPlayerCount] = useState(2);
+  const [matchTarget, setMatchTarget] = useState(3);
   const [cpuSeats, setCpuSeats] = useState(1);
   const [setup, setSetup] = useState<MatchSetup | null>(null);
   const [matchKey, setMatchKey] = useState(0);
@@ -59,7 +59,7 @@ export function UndercutPage() {
         name: seat.name,
         difficulty: 2,
       })),
-      scoreAim: (doc.config.scoreAim as number) ?? 25,
+      matchTarget: (doc.config.matchTarget as number) ?? 3,
       online: true,
     });
     setMatchKey((k) => k + 1);
@@ -71,28 +71,45 @@ export function UndercutPage() {
     if (mode === "cpu") {
       const info = difficultyInfo(difficulty);
       seats.push({ kind: "human", name: "You" });
-      seats.push({ kind: "cpu", name: `${info.persona} 1`, difficulty });
-      seats.push({ kind: "cpu", name: `${info.persona} 2`, difficulty });
+      for (let i = 1; i < playerCount; i++) {
+        seats.push({
+          kind: "cpu",
+          name: playerCount > 2 ? `${info.persona} ${i}` : info.persona,
+          difficulty,
+        });
+      }
     } else {
-      for (let i = 0; i < PLAYER_COUNT; i++) {
+      for (let i = 0; i < playerCount; i++) {
         seats.push({ kind: "human", name: `Player ${i + 1}` });
       }
     }
-    setSetup({ seats, scoreAim, online: false });
+    setSetup({ seats, matchTarget, online: false });
     setMatchKey((k) => k + 1);
   };
 
   const settings = (
-    <OptionRow
-      label="Play to"
-      options={[
-        { value: 15, label: "15" },
-        { value: 25, label: "25" },
-        { value: 40, label: "40" },
-      ]}
-      value={scoreAim}
-      onChange={setScoreAim}
-    />
+    <>
+      <OptionRow
+        label="Players"
+        options={[
+          { value: 2, label: "2" },
+          { value: 3, label: "3" },
+          { value: 4, label: "4" },
+        ]}
+        value={playerCount}
+        onChange={setPlayerCount}
+      />
+      <OptionRow
+        label="Match"
+        options={[
+          { value: 1, label: "First to 1" },
+          { value: 3, label: "First to 3" },
+          { value: 5, label: "First to 5" },
+        ]}
+        value={matchTarget}
+        onChange={setMatchTarget}
+      />
+    </>
   );
 
   const onlineSettings = (
@@ -100,12 +117,11 @@ export function UndercutPage() {
       {settings}
       <OptionRow
         label="CPU seats"
-        options={[
-          { value: 0, label: "None" },
-          { value: 1, label: "1" },
-          { value: 2, label: "2" },
-        ]}
-        value={cpuSeats}
+        options={Array.from({ length: playerCount }, (_, i) => ({
+          value: i,
+          label: i === 0 ? "None" : String(i),
+        }))}
+        value={Math.min(cpuSeats, playerCount - 1)}
         onChange={setCpuSeats}
       />
     </>
@@ -128,13 +144,13 @@ export function UndercutPage() {
           onCreateRoom={async (name) => {
             await room.createRoom(
               "undercut",
-              { scoreAim },
-              PLAYER_COUNT,
+              { playerCount, matchTarget },
+              playerCount,
               name,
               undercutEngine.serialize(
-                createInitial({ playerCount: PLAYER_COUNT, scoreAim }),
+                createInitial({ playerCount, roundTarget: ROUND_TARGET, matchTarget }),
               ),
-              cpuSeats,
+              Math.min(cpuSeats, playerCount - 1),
             );
           }}
           onJoinRoom={async (code, name) => {
@@ -182,11 +198,15 @@ function UndercutLocalMatch({
 }) {
   const match = useMatch<UndercutState, number>({
     engine: undercutEngine,
-    initialState: createInitial({ playerCount: PLAYER_COUNT, scoreAim: setup.scoreAim }),
+    initialState: createInitial({
+      playerCount: setup.seats.length,
+      roundTarget: ROUND_TARGET,
+      matchTarget: setup.matchTarget,
+    }),
     seats: setup.seats,
     chooseCpuMove: (state, player, difficulty) =>
       chooseUndercutBid(state, player, difficulty),
-    // Bids should land close together so the round feels simultaneous.
+    // Bids should land close together so the hand feels simultaneous.
     cpuDelay: () => 250 + Math.random() * 400,
   });
 
@@ -194,42 +214,25 @@ function UndercutLocalMatch({
   const activeSeat = setup.seats[currentPlayer];
 
   // Hotseat privacy gate: each human confirms before their pad appears.
-  const round = state.history.length;
-  const [gateOpened, setGateOpened] = useState<{ round: number; player: number } | null>(null);
+  const hand = state.history.length;
+  const [gateOpened, setGateOpened] = useState<{ hand: number; player: number } | null>(null);
   const gateActive =
     hotseat &&
     !winResult.over &&
     activeSeat.kind === "human" &&
-    (gateOpened?.round !== round || gateOpened.player !== currentPlayer);
+    (gateOpened?.hand !== hand || gateOpened.player !== currentPlayer);
 
   const humanTurn = !winResult.over && activeSeat.kind === "human" && !thinking;
   const padRange = humanTurn ? bidRange(state, currentPlayer) : null;
 
-  const status = winResult.over
-    ? "Game over"
-    : humanTurn
-      ? `${activeSeat.name} — pick your number`
-      : "Waiting for bids…";
-
   return (
     <MatchLayout
-      players={setup.seats.map((seat, i) => (
-        <PlayerChip
-          key={i}
-          seat={seat}
-          index={i}
-          score={state.scores[i]}
-          active={!winResult.over && currentPlayer === i}
-          won={winResult.over && winResult.winners.includes(i)}
-        />
-      ))}
-      status={status}
       overlay={
         winResult.over ? (
           <GameOverCard
             winners={winResult.winners}
             seats={setup.seats}
-            detail={`First to ${setup.scoreAim}`}
+            detail={`First to ${setup.matchTarget} round win${setup.matchTarget > 1 ? "s" : ""}`}
             onRematch={onRematch}
             onBackToLobby={onExit}
           />
@@ -241,13 +244,14 @@ function UndercutLocalMatch({
         seats={setup.seats}
         lockedSeats={state.pendingBids.map((b) => b !== null)}
         padRange={padRange}
+        padAnchor={humanTurn ? state.lastBids[currentPlayer] : 0}
         padLabel={humanTurn ? `${activeSeat.name}, bid in secret` : "Opponents are bidding…"}
         onBid={(n) => {
           setGateOpened(null);
           match.submitMove(n);
         }}
         gate={gateActive ? activeSeat.name : null}
-        onGateOpen={() => setGateOpened({ round, player: currentPlayer })}
+        onGateOpen={() => setGateOpened({ hand, player: currentPlayer })}
       />
     </MatchLayout>
   );
@@ -267,7 +271,11 @@ function UndercutOnlineMatch({
   const [state, setState] = useState<UndercutState>(() =>
     room.room?.state
       ? undercutEngine.deserialize(room.room.state as Json)
-      : createInitial({ playerCount: PLAYER_COUNT, scoreAim: setup.scoreAim }),
+      : createInitial({
+          playerCount: setup.seats.length,
+          roundTarget: ROUND_TARGET,
+          matchTarget: setup.matchTarget,
+        }),
   );
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const secret = useRef<{ bid: number; salt: string } | null>(null);
@@ -289,7 +297,7 @@ function UndercutOnlineMatch({
     [doc, room],
   );
 
-  // Host: choose + commit bids for CPU seats each round.
+  // Host: choose + commit bids for CPU seats each hand.
   useEffect(() => {
     if (!doc || !room.isHost || state.over) return;
     doc.seats.forEach((seat, i) => {
@@ -332,7 +340,7 @@ function UndercutOnlineMatch({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doc?.commits, doc?.reveals]);
 
-  // Everyone revealed → verify commitments, apply the round locally.
+  // Everyone revealed → verify commitments, apply the hand locally.
   useEffect(() => {
     if (!doc || state.over) return;
     const reveals = doc.reveals ?? {};
@@ -367,33 +375,15 @@ function UndercutOnlineMatch({
   const lockedSeats = setup.seats.map((_, i) => Boolean(doc?.commits?.[String(i)]));
   const padRange = !winResult.over && !myCommitted ? bidRange(state, room.mySeat) : null;
 
-  const status = verifyError
-    ? verifyError
-    : winResult.over
-      ? "Game over"
-      : myCommitted
-        ? "Bid locked — waiting for the table…"
-        : "Pick your number";
-
   return (
     <MatchLayout
-      players={setup.seats.map((seat, i) => (
-        <PlayerChip
-          key={i}
-          seat={seat}
-          index={i}
-          score={state.scores[i]}
-          note={lockedSeats[i] && !winResult.over ? "locked" : undefined}
-          won={winResult.over && winResult.winners.includes(i)}
-        />
-      ))}
-      status={status}
+      status={verifyError ?? undefined}
       overlay={
         winResult.over ? (
           <GameOverCard
             winners={winResult.winners}
             seats={setup.seats}
-            detail={`First to ${setup.scoreAim}`}
+            detail={`First to ${setup.matchTarget} round win${setup.matchTarget > 1 ? "s" : ""}`}
             onBackToLobby={onExit}
           />
         ) : undefined
@@ -404,6 +394,7 @@ function UndercutOnlineMatch({
         seats={setup.seats}
         lockedSeats={lockedSeats}
         padRange={padRange}
+        padAnchor={!winResult.over && !myCommitted ? state.lastBids[room.mySeat] : 0}
         padLabel={myCommitted ? "Waiting for other bids…" : "Bid in secret"}
         onBid={(n) => void placeBid(n)}
         gate={null}

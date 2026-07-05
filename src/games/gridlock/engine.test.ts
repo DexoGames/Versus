@@ -30,12 +30,13 @@ describe("gridlock turn structure", () => {
   });
 });
 
-describe("gridlock enclosure via flood fill", () => {
+describe("gridlock enclosure via loop detection", () => {
   /**
    * 3×3 dots (2×2 cells). P0 starts at (2,0), P1 at (0,2). P0 walls off the
    * bottom-right cell; the final closing edge must capture exactly that cell.
+   * Along the way P1's forced diagonal closes a triangle worth 0.5.
    */
-  it("captures a unit cell when the loop closes, credited to the closer", () => {
+  it("captures a unit cell for 1 and a diagonal triangle for 0.5", () => {
     let state = createInitialGridlock(3, 2);
     state = move(state, 1, 0); // P0: (2,0)->(1,0)
     state = move(state, 0, 1); // P1: (0,2)->(0,1)
@@ -50,13 +51,18 @@ describe("gridlock enclosure via flood fill", () => {
     const p1Moves = gridlockEngine.getLegalMoves(state, 1);
     expect(p1Moves.every((m) => m.x !== 1 || m.y !== 0)).toBe(true);
     expect(p1Moves).toContainEqual({ x: 0, y: 1 });
-    state = move(state, 0, 1); // P1 diagonal fallback
+    // The diagonal (1,0)->(0,1) closes the triangle (0,1)(0,0)(1,0) — 0.5 pts.
+    state = move(state, 0, 1);
+    expect(state.scores).toEqual([0, 0.5]);
+    expect(state.regions).toHaveLength(1);
+    expect(state.regions[0].player).toBe(1);
+    expect(state.regions[0].vertices).toHaveLength(3);
 
     state = move(state, 2, 0); // P0: (2,1)->(2,0) closes the bottom-right cell
-    expect(state.scores).toEqual([1, 0]);
-    expect(state.cellOwner[0 * 2 + 1]).toBe(0); // cell (1,0)
-    expect(state.regions).toHaveLength(1);
-    expect(state.regions[0].player).toBe(0);
+    expect(state.scores).toEqual([1, 0.5]);
+    expect(state.regions).toHaveLength(2);
+    expect(state.regions[1].player).toBe(0);
+    expect(state.regions[1].vertices).toHaveLength(4);
   });
 
   it("a capture is credited to whoever closes it, even around foreign lines", () => {
@@ -72,8 +78,22 @@ describe("gridlock enclosure via flood fill", () => {
     expect(state.scores).toEqual([0, 0]);
     state = move(state, 2, 0); // P1: (2,1)->(2,0) closes the cell P0 built
     expect(state.scores).toEqual([0, 1]);
-    expect(state.cellOwner[0 * 2 + 1]).toBe(1);
     expect(state.regions[0].player).toBe(1);
+  });
+
+  it("a later area over a crossing diagonal only claims the leftover quarter", () => {
+    // Earlier areas keep their quarter-samples: the first triangle takes two
+    // quarters of the cell, the crossing triangle only gets the one left on
+    // its side — the famous 0.25 capture.
+    const base = createInitialGridlock(3, 2);
+    const state = {
+      ...base,
+      regions: [
+        { id: 0, player: 0, vertices: [{ x: 0, y: 0 }, { x: 1, y: 1 }, { x: 1, y: 0 }] },
+        { id: 1, player: 1, vertices: [{ x: 1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }] },
+      ],
+    };
+    expect(buildSim(state).scores).toEqual([0.5, 0.25]);
   });
 });
 
@@ -111,10 +131,15 @@ describe("gridlock self-play sanity", () => {
       }
       expect(state.over).toBe(true);
       expect(state.winReason).not.toBeNull();
-      // Scores must equal owned-cell counts.
-      const counts = [0, 0];
-      for (const owner of state.cellOwner) if (owner >= 0) counts[owner]++;
-      expect(state.scores).toEqual(counts);
+      // Scores are quarter-cell multiples and must survive a state round-trip
+      // (buildSim replays the capture history from scratch).
+      const totalCells = 9;
+      for (const s of state.scores) {
+        expect(s * 4).toBe(Math.round(s * 4));
+        expect(s).toBeGreaterThanOrEqual(0);
+      }
+      expect(state.scores[0] + state.scores[1]).toBeLessThanOrEqual(totalCells);
+      expect(buildSim(state).scores).toEqual(state.scores);
     }
   });
 

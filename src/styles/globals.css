@@ -32,11 +32,58 @@
 
     --radius: 0px; /* everything is square */
 
-    /* --- versus: per-player colours, derived from the fixed palette --- */
-    --player-0: #ff5a36;
-    --player-1: #3aabff;
-    --player-2: #2fe089;
-    --player-3: #ffc83a;
+    /* --- game theme colours: identity of each game's chrome. Kept
+       deliberately separate from the player palette below. --- */
+    --game-gridlock: #ff5a36; /* orange */
+    --game-spellout: #3aabff; /* blue */
+    --game-undercut: #3f9c62; /* muted forest green */
+
+    /* --- per-player palette: distinct from every game theme so a player's
+       chain/token never blends into the page accent --- */
+    --player-0: #ff4f81; /* rose */
+    --player-1: #35d0be; /* teal */
+    --player-2: #b06bff; /* violet */
+    --player-3: #ffc83a; /* amber */
+
+    /* --- lobby semantic colours (fixed, theme-independent) so the setup
+       screen isn't a wall of one colour --- */
+    --mode-cpu: #b06bff;    /* the machine */
+    --mode-hotseat: #ff8a3a; /* shared couch */
+    --mode-online: #35d0be;  /* the wire */
+
+    /* difficulty ramp: calm green climbing to alarm red */
+    --diff-1: #46c46a;
+    --diff-2: #d9c02e;
+    --diff-3: #ff8a3a;
+    --diff-4: #ff4d4d;
+
+    /* --- per-game accent theme (hub default = orange) --- */
+    --accent: var(--game-gridlock);
+    --accent-deep: var(--orange-deep);
+    --accent-ink: var(--orange-ink);
+    --accent-soft: rgba(255, 90, 54, 0.09);
+}
+
+/* Each game recolours the chrome: nav underline, primary CTA, key highlights. */
+.theme-gridlock {
+    --accent: var(--game-gridlock);
+    --accent-deep: #cf4a25;
+    --accent-ink: #2a0f06;
+    --accent-soft: rgba(255, 90, 54, 0.10);
+}
+
+.theme-spellout {
+    --accent: var(--game-spellout);
+    --accent-deep: #2a85cc;
+    --accent-ink: #061625;
+    --accent-soft: rgba(58, 171, 255, 0.10);
+}
+
+.theme-undercut {
+    --accent: var(--game-undercut);
+    --accent-deep: #2d7449;
+    --accent-ink: #ecf7f0; /* light text — the green is dark enough to need it */
+    --accent-soft: rgba(63, 156, 98, 0.12);
 }
 
 * {

@@ -34,13 +34,15 @@
 }
 
 .option:hover {
-    border-color: var(--bone-dim);
+    border-color: var(--bone);
     color: var(--bone);
 }
 
+/* Selected reads as a physical toggle (filled bone), not the page accent —
+   so segmented settings don't just repeat the theme colour everywhere. */
 .selected,
 .selected:hover {
-    border-color: var(--orange);
-    color: var(--orange);
-    background: rgba(255, 90, 54, 0.08);
+    border-color: var(--bone);
+    color: var(--black);
+    background: var(--bone);
 }

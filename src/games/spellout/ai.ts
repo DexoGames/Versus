@@ -10,6 +10,8 @@ import type { SpelloutState } from "./types";
  *  3 Hard    — same engine as Bob with tighter noise and a softer obscure-word
  *              penalty, so it happily ends games on weird words.
  *  4 Extreme — "Dexter": deep minimax over the prefix tree (near-solve).
+ *              (The minimax assumes two seats; in a 3-player game it still
+ *              plays strong, safe letters — just without exact parity.)
  *
  * The heuristic evaluator mirrors the Unity recurrence: a completed common
  * word scores +1, a completed obscure word -penalty, a dead prefix -1, and

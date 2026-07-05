@@ -1,3 +1,5 @@
+/* Three equal tracks: the centre links stay centred no matter how wide the
+   brand or CTA get, so nothing shifts when the route (and accent) changes. */
 .navbar {
     position: fixed;
     top: 0;
@@ -5,62 +7,40 @@
     right: 0;
     z-index: 1000;
     height: 56px;
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
     gap: 20px;
     padding: 0 24px;
     background: var(--black);
     color: var(--bone);
-    border-bottom: 2px solid var(--orange);
-}
-
-.left {
-    display: flex;
-    align-items: baseline;
-    gap: 14px;
-}
-
-.status {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--bone-dim);
-}
-
-.dot {
-    width: 7px;
-    height: 7px;
-    background: #4ee07a;
+    border-bottom: 2px solid var(--accent);
+    transition: border-color 0.3s ease;
 }
 
 .brand {
+    justify-self: start;
     font-family: var(--font-display);
     font-size: 1.15rem;
     letter-spacing: 0.02em;
     color: var(--bone);
     text-decoration: none;
+    white-space: nowrap;
 }
 
-.brandSuffix {
-    color: var(--orange);
-    /* reserve room for the longest word ("Undercut") so typing doesn't reflow the nav */
-    display: inline-block;
-    min-width: 5.6em;
-    text-align: left;
+.brandDot {
+    color: var(--accent);
+    transition: color 0.3s ease;
 }
 
 .links {
+    justify-self: center;
     display: flex;
     list-style: none;
     gap: 4px;
 }
 
-.links a {
+.gameLink {
     display: block;
     padding: 8px 12px;
     font-family: var(--font-mono);
@@ -70,41 +50,38 @@
     letter-spacing: 0.08em;
     color: var(--bone-dim);
     text-decoration: none;
-    transition: color 0.15s ease;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
 }
 
-.links a:hover {
-    color: var(--orange);
+.gameLink:hover {
+    color: var(--link-accent, var(--accent));
 }
 
-.links a.active {
-    color: var(--orange);
+.gameLink.active {
+    color: var(--link-accent, var(--accent));
+    border-bottom-color: var(--link-accent, var(--accent));
 }
 
 .cta {
+    justify-self: end;
     flex-shrink: 0;
     padding: 9px 16px;
-    background: var(--orange);
-    color: var(--orange-ink);
+    background: var(--accent);
+    color: var(--accent-ink);
     font-family: var(--font-mono);
     font-weight: 700;
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     text-decoration: none;
-    border: 2px solid var(--orange);
-    transition: background 0.15s ease, color 0.15s ease;
+    border: 2px solid var(--accent);
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.3s ease;
 }
 
 .cta:hover {
     background: transparent;
-    color: var(--orange);
-}
-
-@media (max-width: 900px) {
-    .status {
-        display: none;
-    }
+    color: var(--accent);
 }
 
 @media (max-width: 760px) {
@@ -117,7 +94,7 @@
         display: none;
     }
 
-    .links a {
+    .gameLink {
         padding: 6px 6px;
         font-size: 0.62rem;
         letter-spacing: 0.04em;
@@ -129,7 +106,7 @@
 }
 
 @media (max-width: 420px) {
-    .links a {
+    .gameLink {
         padding: 5px 4px;
         font-size: 0.55rem;
     }

@@ -29,10 +29,11 @@ export function SpelloutBoard({ state, remaining, canPlay, onPlay }: SpelloutBoa
 
   const tiles = state.fragment.split("");
   const won = state.over && state.reason === "completed-word";
+  const busted = state.over && state.reason === "dead-letter";
 
   return (
     <div className={styles.board}>
-      <div className={styles.fragment}>
+      <div className={cx(styles.fragment, busted && styles.fragmentBust)}>
         {tiles.length === 0 && !state.deadLetter && (
           <span className={styles.placeholder}>first letter…</span>
         )}
@@ -40,7 +41,10 @@ export function SpelloutBoard({ state, remaining, canPlay, onPlay }: SpelloutBoa
           <span
             key={i}
             className={cx(styles.tile, won && styles.tileWon)}
-            style={{ borderBottomColor: PLAYER_COLORS[i % 2] }}
+            style={{
+              borderBottomColor: PLAYER_COLORS[i % state.playerCount],
+              ...(won ? { animationDelay: `${i * 70}ms` } : null),
+            }}
           >
             {letter}
           </span>
@@ -49,6 +53,7 @@ export function SpelloutBoard({ state, remaining, canPlay, onPlay }: SpelloutBoa
           <span className={cx(styles.tile, styles.tileDead)}>{state.deadLetter}</span>
         )}
         {!state.over && <span className={styles.cursor} />}
+        {busted && <span className={styles.stamp}>Not a word!</span>}
       </div>
 
       <p className={styles.counter}>
