@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// Versus room rules: anonymous-auth players, seat-guarded writes.
+// Deploy with: firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /rooms/{code} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      function isSeated() {
+        return isSignedIn()
+          && request.auth.uid in resource.data.seats.map(['uid'])
+      }
+      function isHost() {
+        return isSignedIn() && request.auth.uid == resource.data.hostUid;
+      }
+
+      // Anyone signed in can read a room (you need the code to find it).
+      allow read: if isSignedIn();
+
+      // Creating a room: creator must be the host and hold seat 0.
+      allow create: if isSignedIn()
+        && request.resource.data.hostUid == request.auth.uid
+        && request.resource.data.seats[0].uid == request.auth.uid
+        && request.resource.data.status == 'waiting';
+
+      // Joining: only appends a seat for yourself while waiting.
+      // Playing: only seated players may write; the host may also write
+      // (start, checkpoint, CPU seats). Immutable fields stay immutable.
+      allow update: if isSignedIn()
+        && (isSeated() || isHost()
+            || (resource.data.status == 'waiting'
+                && request.resource.data.seats.size() == resource.data.seats.size() + 1
+                && request.resource.data.seats[resource.data.seats.size()].uid == request.auth.uid))
+        && request.resource.data.game == resource.data.game
+        && request.resource.data.hostUid == resource.data.hostUid
+        && request.resource.data.createdAt == resource.data.createdAt;
+
+      allow delete: if isHost();
+    }
+  }
+}

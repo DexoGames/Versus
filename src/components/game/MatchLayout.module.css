@@ -1,0 +1,42 @@
+.match {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 36px 0 56px;
+}
+
+.players {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.status {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--bone-dim);
+    min-height: 1.4em;
+}
+
+.arena {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    border: 2px solid var(--line-on-black);
+    background: var(--black-soft);
+    padding: 28px;
+}
+
+.footer {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+@media (max-width: 640px) {
+    .arena {
+        padding: 12px;
+    }
+}

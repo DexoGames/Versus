@@ -1,0 +1,261 @@
+.lobby {
+    display: grid;
+    grid-template-columns: minmax(260px, 380px) 1fr;
+    gap: 48px;
+    padding: 40px 0 56px;
+}
+
+.rules {
+    border: 2px solid var(--line-on-black);
+    padding: 24px;
+    align-self: start;
+}
+
+.rulesTitle {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--orange);
+    margin-bottom: 12px;
+}
+
+.rulesList {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rulesList li {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: var(--bone-dim);
+    padding-left: 16px;
+    position: relative;
+}
+
+.rulesList li::before {
+    content: ">";
+    position: absolute;
+    left: 0;
+    color: var(--orange);
+    font-weight: 700;
+}
+
+.setup {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.modes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.mode {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 16px 18px;
+    background: transparent;
+    border: 2px solid var(--line-on-black);
+    color: var(--bone);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.mode i {
+    color: var(--orange);
+    font-size: 1.1rem;
+}
+
+.mode:hover {
+    border-color: var(--bone-dim);
+}
+
+.modeSelected,
+.modeSelected:hover {
+    border-color: var(--orange);
+    background: rgba(255, 90, 54, 0.08);
+}
+
+.modeLabel {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    text-transform: uppercase;
+}
+
+.modeHint {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    color: var(--bone-dim);
+}
+
+.block {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.blockTitle {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--orange);
+}
+
+.startRow {
+    display: flex;
+}
+
+.input {
+    background: var(--black-soft);
+    border: 2px solid var(--line-on-black);
+    color: var(--bone);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    padding: 10px 14px;
+    max-width: 260px;
+    letter-spacing: 0.08em;
+    outline: none;
+    transition: border-color 0.15s ease;
+}
+
+.input:focus {
+    border-color: var(--orange);
+}
+
+.onlineActions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.joinRow {
+    display: flex;
+    gap: 10px;
+}
+
+.joinRow .input {
+    width: 110px;
+    text-transform: uppercase;
+}
+
+.offlineNote {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--bone-dim);
+    border: 2px solid var(--line-on-black);
+    padding: 16px 18px;
+    line-height: 1.6;
+    max-width: 520px;
+}
+
+.offlineNote code {
+    color: var(--orange);
+}
+
+.code {
+    color: var(--orange);
+    font-family: var(--font-display);
+    letter-spacing: 0.12em;
+    margin-left: 6px;
+}
+
+.share {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--bone-dim);
+}
+
+.shareLink {
+    background: none;
+    border: none;
+    color: var(--orange);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    cursor: pointer;
+    word-break: break-all;
+    text-align: left;
+    padding: 0;
+}
+
+.seatList {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 320px;
+}
+
+.seat {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    padding: 8px 12px;
+    border: 2px solid var(--line-on-black);
+}
+
+.seatEmpty {
+    color: var(--bone-dim);
+    border-style: dashed;
+}
+
+.seatNum {
+    font-weight: 700;
+    color: var(--orange);
+    font-size: 0.68rem;
+}
+
+.seatTag {
+    margin-left: auto;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--bone-dim);
+}
+
+.waiting {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--bone-dim);
+}
+
+.error {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--orange);
+}
+
+@media (max-width: 900px) {
+    .lobby {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+
+    .rules {
+        order: 2;
+    }
+
+    .setup {
+        order: 1;
+    }
+}
+
+@media (max-width: 640px) {
+    .modes {
+        grid-template-columns: 1fr;
+    }
+}

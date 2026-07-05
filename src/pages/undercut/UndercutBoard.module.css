@@ -1,0 +1,232 @@
+.board {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    width: 100%;
+    max-width: 620px;
+    padding: 8px 0;
+}
+
+.scores {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.scoreRow {
+    display: grid;
+    grid-template-columns: 120px 1fr 70px;
+    align-items: center;
+    gap: 14px;
+}
+
+.scoreName {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bar {
+    position: relative;
+    height: 20px;
+    background: var(--black);
+    border: 2px solid var(--line-on-black);
+}
+
+.barFill {
+    height: 100%;
+    transition: width 0.6s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+.locked {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.6rem;
+    color: var(--bone-dim);
+}
+
+.scoreNum {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    color: var(--bone);
+    text-align: right;
+}
+
+.scoreAim {
+    font-size: 0.7rem;
+    color: var(--bone-dim);
+}
+
+.reveal {
+    border: 2px solid var(--line-on-black);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: revealIn 0.35s ease;
+}
+
+@keyframes revealIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.revealTitle {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--bone-dim);
+}
+
+.revealRow {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.revealBid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 20px;
+    border: 2px solid var(--line-on-black);
+    opacity: 0.6;
+    animation: bidFlip 0.4s cubic-bezier(0.2, 1.3, 0.4, 1) backwards;
+}
+
+.revealBid:nth-child(2) { animation-delay: 0.12s; }
+.revealBid:nth-child(3) { animation-delay: 0.24s; }
+
+@keyframes bidFlip {
+    from { transform: rotateX(90deg); opacity: 0; }
+    to { transform: rotateX(0); opacity: 0.6; }
+}
+
+.revealWinner {
+    border-color: var(--bid-color);
+    opacity: 1;
+}
+
+.revealWinner .revealNum {
+    color: var(--bid-color);
+}
+
+.revealDraw {
+    border-color: var(--gold);
+    opacity: 0.85;
+}
+
+.revealNum {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    color: var(--bone);
+    line-height: 1;
+}
+
+.revealName {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--bone-dim);
+    max-width: 90px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.revealOutcome {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-align: center;
+    color: var(--bone);
+}
+
+.padArea {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-height: 100px;
+}
+
+.padLabel {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--bone-dim);
+}
+
+.pad {
+    display: flex;
+    gap: 8px;
+}
+
+.padKey {
+    width: 58px;
+    height: 58px;
+    background: var(--black);
+    border: 2px solid var(--line-on-black);
+    color: var(--bone);
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.padKey:hover:not(:disabled) {
+    border-color: var(--orange);
+    color: var(--orange);
+    background: rgba(255, 90, 54, 0.08);
+}
+
+.padKey:disabled {
+    opacity: 0.25;
+    cursor: default;
+}
+
+.gate {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 26px;
+    background: var(--orange);
+    border: 2px solid var(--orange);
+    color: var(--orange-ink);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.gate:hover {
+    background: transparent;
+    color: var(--orange);
+}
+
+@media (max-width: 560px) {
+    .scoreRow {
+        grid-template-columns: 84px 1fr 58px;
+        gap: 9px;
+    }
+
+    .padKey {
+        width: 46px;
+        height: 46px;
+        font-size: 1.1rem;
+    }
+}

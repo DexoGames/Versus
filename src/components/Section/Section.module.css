@@ -1,0 +1,32 @@
+.section {
+    width: 100%;
+    scroll-margin-top: 56px;
+    border-top: 2px solid var(--orange);
+}
+
+.cream {
+    background: var(--cream);
+    color: var(--ink);
+}
+
+.black {
+    background: var(--black);
+    color: var(--bone);
+}
+
+.inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 56px 40px 0;
+}
+
+.bleed {
+    max-width: none;
+    padding: 0;
+}
+
+@media (max-width: 768px) {
+    .inner {
+        padding: 40px 18px 0;
+    }
+}

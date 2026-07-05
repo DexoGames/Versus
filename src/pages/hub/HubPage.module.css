@@ -1,0 +1,205 @@
+.main {
+    padding-top: 56px;
+    background: var(--black);
+}
+
+.hero {
+    background: var(--black);
+    color: var(--bone);
+}
+
+.heroInner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 96px 40px 72px;
+}
+
+.heroKicker {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--orange);
+    margin-bottom: 10px;
+}
+
+.heroTitle {
+    font-family: var(--font-display);
+    font-size: clamp(3.4rem, 11vw, 8rem);
+    line-height: 0.92;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+}
+
+.heroDot {
+    color: var(--orange);
+}
+
+.heroSub {
+    font-family: var(--font-mono);
+    font-size: 0.92rem;
+    line-height: 1.7;
+    color: var(--bone-dim);
+    max-width: 560px;
+    margin-top: 22px;
+}
+
+.heroMeta {
+    display: flex;
+    gap: 10px;
+    margin-top: 26px;
+    flex-wrap: wrap;
+}
+
+.heroMeta span {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 7px 12px;
+    border: 2px solid var(--line-on-black);
+    color: var(--bone-dim);
+}
+
+.gamesSection {
+    padding-bottom: 72px !important;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+    margin-top: 36px;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    background: var(--black);
+    color: var(--bone);
+    text-decoration: none;
+    border: 2px solid var(--black);
+    transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    border-color: var(--orange);
+}
+
+.cover {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 190px;
+    background:
+        linear-gradient(135deg, rgba(236, 230, 219, 0.05) 0%, transparent 55%),
+        var(--black-soft);
+    border-bottom: 2px solid var(--accent);
+    overflow: hidden;
+}
+
+.cover i {
+    font-size: 4rem;
+    color: var(--accent);
+    transition: transform 0.18s ease;
+}
+
+.card:hover .cover i {
+    transform: scale(1.12);
+}
+
+.coverIndex {
+    position: absolute;
+    right: 14px;
+    bottom: 6px;
+    font-family: var(--font-display);
+    font-size: 3.4rem;
+    line-height: 1;
+    color: rgba(236, 230, 219, 0.07);
+    user-select: none;
+}
+
+.cardBody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px 22px 24px;
+    flex: 1;
+}
+
+.cardTop {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.cardTitle {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.cardPlayers {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--bone-dim);
+    white-space: nowrap;
+}
+
+.cardGenre {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--orange);
+}
+
+.cardBlurb {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    line-height: 1.6;
+    color: var(--bone-dim);
+    flex: 1;
+}
+
+.cardCta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--orange);
+}
+
+.card:hover .cardCta i {
+    animation: nudge 0.6s ease infinite;
+}
+
+@keyframes nudge {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
+}
+
+@media (max-width: 900px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .heroInner {
+        padding: 72px 18px 56px;
+    }
+}

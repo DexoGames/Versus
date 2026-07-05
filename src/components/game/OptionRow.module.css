@@ -1,0 +1,46 @@
+.row {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--bone);
+    min-width: 110px;
+}
+
+.options {
+    display: flex;
+    gap: 8px;
+}
+
+.option {
+    padding: 8px 16px;
+    background: transparent;
+    border: 2px solid var(--line-on-black);
+    color: var(--bone-dim);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.option:hover {
+    border-color: var(--bone-dim);
+    color: var(--bone);
+}
+
+.selected,
+.selected:hover {
+    border-color: var(--orange);
+    color: var(--orange);
+    background: rgba(255, 90, 54, 0.08);
+}

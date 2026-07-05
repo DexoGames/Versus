@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(findstr -i \"spellout\\\\|undercut\")",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\dexte\\\\DexoGames\" -Directory | Where-Object { $_.Name -match \"Spellout|Undercut\" })",
+      "Bash(ls -d \"C:\\\\Users\\\\dexte\\\\DexoGames\"/*[Ss]pell* \"C:\\\\Users\\\\dexte\\\\DexoGames\"/*[Uu]nder* 2>/dev/null)"
+    ]
+  }
+}

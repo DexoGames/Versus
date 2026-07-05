@@ -1,0 +1,50 @@
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.option {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    text-align: left;
+    background: transparent;
+    border: 2px solid var(--line-on-black);
+    color: var(--bone);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.option:hover {
+    border-color: var(--bone-dim);
+}
+
+.selected,
+.selected:hover {
+    border-color: var(--orange);
+    background: rgba(255, 90, 54, 0.08);
+}
+
+.label {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--orange);
+}
+
+.persona {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    text-transform: uppercase;
+}
+
+.tagline {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    line-height: 1.45;
+    color: var(--bone-dim);
+}
