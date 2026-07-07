@@ -45,10 +45,10 @@ export interface DifficultyInfo {
  * changing a string here updates every game's lobby, chips and status text.
  */
 export const CPU_NAMES: Record<Difficulty, string> = {
-  1: "Isaac", // Easy
-  2: "Bob", // Medium
-  3: "Vera", // Hard
-  4: "Dexter", // Extreme
+  1: "Richard", // Easy
+  2: "Paul", // Medium
+  3: "John", // Hard
+  4: "George", // Extreme
 };
 
 export const DIFFICULTIES: DifficultyInfo[] = [

@@ -213,6 +213,10 @@ function UndercutLocalMatch({
   const { state, winResult, currentPlayer, thinking } = match;
   const activeSeat = setup.seats[currentPlayer];
 
+  // The board withholds this until the final hand's reveal + round banner have
+  // played, so the game-over card never jumps the "round won" moment.
+  const [matchOver, setMatchOver] = useState(false);
+
   // Hotseat privacy gate: each human confirms before their pad appears.
   const hand = state.history.length;
   const [gateOpened, setGateOpened] = useState<{ hand: number; player: number } | null>(null);
@@ -228,7 +232,7 @@ function UndercutLocalMatch({
   return (
     <MatchLayout
       overlay={
-        winResult.over ? (
+        matchOver ? (
           <GameOverCard
             winners={winResult.winners}
             seats={setup.seats}
@@ -251,6 +255,7 @@ function UndercutLocalMatch({
         }}
         gate={gateActive ? activeSeat.name : null}
         onGateOpen={() => setGateOpened({ hand, player: currentPlayer })}
+        onMatchOver={() => setMatchOver(true)}
       />
     </MatchLayout>
   );
@@ -374,11 +379,14 @@ function UndercutOnlineMatch({
   const lockedSeats = setup.seats.map((_, i) => Boolean(doc?.commits?.[String(i)]));
   const padRange = !winResult.over && !myCommitted ? bidRange(state, room.mySeat) : null;
 
+  // Same as local: hold the game-over card until the board has settled.
+  const [matchOver, setMatchOver] = useState(false);
+
   return (
     <MatchLayout
       status={verifyError ?? undefined}
       overlay={
-        winResult.over ? (
+        matchOver ? (
           <GameOverCard
             winners={winResult.winners}
             seats={setup.seats}
@@ -397,6 +405,7 @@ function UndercutOnlineMatch({
         onBid={(n) => void placeBid(n)}
         gate={null}
         onGateOpen={() => {}}
+        onMatchOver={() => setMatchOver(true)}
       />
     </MatchLayout>
   );

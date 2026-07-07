@@ -19,6 +19,9 @@ interface UndercutBoardProps {
   /** Hotseat privacy gate: who must confirm before the pad shows. */
   gate: string | null;
   onGateOpen: () => void;
+  /** Fired once the match-winning hand has fully finished animating (reveal +
+      round banner) — the cue for the parent to show the game-over card. */
+  onMatchOver?: () => void;
 }
 
 interface RevealStep {
@@ -29,7 +32,15 @@ interface RevealStep {
 }
 
 const STEP_MS = 520;
+/** Round-banner timing: how long after the reveal it appears, and how long it holds. */
+const BANNER_DELAY = 300;
+const BANNER_HOLD = 2600;
+/** Total tail after a round-closing hand's reveal — banner in, banner out, reset. */
+const POST_ROUND_MS = BANNER_DELAY + BANNER_HOLD;
 const axisPos = (value: number) => ((value - 1) / (BID_MAX - 1)) * 100;
+/** Where a token sits above the axis line, and how far each stacked tie lifts. */
+const TOKEN_BASE = 34;
+const TOKEN_STEP = 38;
 
 /**
  * The reveal narrates the rule the way it plays: the highest bid leads, and a
@@ -89,6 +100,7 @@ export function UndercutBoard({
   onBid,
   gate,
   onGateOpen,
+  onMatchOver,
 }: UndercutBoardProps) {
   const { roundTarget, matchTarget } = state.config;
   const lastHand: RoundRecord | null =
@@ -114,6 +126,71 @@ export function UndercutBoard({
   const step = steps.length > 0 ? steps[Math.min(stepIdx, steps.length - 1)] : null;
   const revealDone = step?.kind === "result";
   const drawHand = revealDone && lastHand !== null && lastHand.winner === -1;
+  const revealMs = steps.length * STEP_MS;
+
+  // Hands whose reveal (and any round banner) has finished playing. While the
+  // live history runs ahead of this the board is "busy": the pad is withheld
+  // and the game-over card waits, so a fast clicker can't stack the next hand's
+  // animation on top of the current one, and "round won" always precedes "match
+  // won". Seeded to the current length so a mid-game reconnect isn't stuck busy.
+  const [animatedHands, setAnimatedHands] = useState(state.history.length);
+  const busy = state.history.length > animatedHands;
+
+  // Once the reveal has played out and it's this client's turn, dim the last
+  // hand so the eye moves to the picker — the only cue that input is wanted.
+  // (Not while busy: the pad is still withheld, so there's nothing to lead to.)
+  const awaitingInput = !state.over && padRange !== null;
+  const dimReveal = revealDone && awaitingInput && !busy;
+
+  // The standings lag the reveal: scores, pips and the round reset only move
+  // after the hand has finished animating. A round-winning hand therefore
+  // shows its climb to the target and gets announced before the next round
+  // zeroes everything out.
+  const [disp, setDisp] = useState(() => ({
+    scores: state.scores.slice(),
+    roundWins: state.roundWins.slice(),
+  }));
+  const dispHands = useRef(state.history.length);
+  const dispRounds = useRef(state.rounds.length);
+  const dispTimers = useRef<number[]>([]);
+  useEffect(() => {
+    if (state.history.length === dispHands.current) return;
+    dispHands.current = state.history.length;
+    const roundClosed = state.rounds.length > dispRounds.current;
+    dispRounds.current = state.rounds.length;
+    const settled = state.history.length;
+
+    dispTimers.current.forEach(clearTimeout);
+    dispTimers.current = [];
+    const at = (ms: number, fn: () => void) =>
+      dispTimers.current.push(window.setTimeout(fn, ms));
+
+    if (roundClosed) {
+      // Show the climactic final points (pre-reset) and the freshly-won pip…
+      const finalPoints = state.rounds[state.rounds.length - 1].points;
+      at(revealMs, () =>
+        setDisp({ scores: finalPoints.slice(), roundWins: state.roundWins.slice() }),
+      );
+      // …then, once the winner banner has come and gone, zero out for the next
+      // round (unless the match just ended) and release the board.
+      at(revealMs + POST_ROUND_MS, () => {
+        if (!state.over) {
+          setDisp({ scores: state.scores.slice(), roundWins: state.roundWins.slice() });
+        }
+        setAnimatedHands(settled);
+      });
+    } else {
+      at(revealMs, () => {
+        setDisp({ scores: state.scores.slice(), roundWins: state.roundWins.slice() });
+        setAnimatedHands(settled);
+      });
+    }
+    return () => {
+      dispTimers.current.forEach(clearTimeout);
+      dispTimers.current = [];
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.history.length]);
 
   // Round banner: fires once the reveal narration has finished.
   const [banner, setBanner] = useState<{ round: number; winner: number } | null>(null);
@@ -122,12 +199,12 @@ export function UndercutBoard({
     if (state.rounds.length > prevRounds.current) {
       prevRounds.current = state.rounds.length;
       const result = state.rounds[state.rounds.length - 1];
-      const revealTime = steps.length * STEP_MS + 300;
+      const revealTime = revealMs + BANNER_DELAY;
       const show = setTimeout(
         () => setBanner({ round: state.rounds.length, winner: result.winner }),
         revealTime,
       );
-      const hide = setTimeout(() => setBanner(null), revealTime + 2600);
+      const hide = setTimeout(() => setBanner(null), revealTime + BANNER_HOLD);
       return () => {
         clearTimeout(show);
         clearTimeout(hide);
@@ -136,6 +213,15 @@ export function UndercutBoard({
     prevRounds.current = state.rounds.length;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.rounds.length]);
+
+  // The game-over card waits for the board to settle. On the match-winning hand
+  // that means after the reveal and the round banner (busy clears at
+  // revealMs + POST_ROUND_MS); on a mid-game reconnect to a finished match it
+  // fires straight away, since busy seeds false.
+  useEffect(() => {
+    if (state.over && !busy) onMatchOver?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.over, busy]);
 
   return (
     <div className={styles.board}>
@@ -152,9 +238,9 @@ export function UndercutBoard({
                 {Array.from({ length: matchTarget }, (_, p) => (
                   <span
                     key={p}
-                    className={cx(styles.pip, p < state.roundWins[i] && styles.pipWon)}
+                    className={cx(styles.pip, p < disp.roundWins[i] && styles.pipWon)}
                     style={
-                      p < state.roundWins[i]
+                      p < disp.roundWins[i]
                         ? { background: PLAYER_COLORS[i], borderColor: PLAYER_COLORS[i] }
                         : undefined
                     }
@@ -165,13 +251,13 @@ export function UndercutBoard({
                 <span
                   className={styles.trackFill}
                   style={{
-                    width: `${Math.min(100, (state.scores[i] / roundTarget) * 100)}%`,
+                    width: `${Math.min(100, (disp.scores[i] / roundTarget) * 100)}%`,
                     background: PLAYER_COLORS[i],
                   }}
                 />
               </span>
               <span className={styles.scoreNum}>
-                {state.scores[i]}
+                {disp.scores[i]}
                 {lockedSeats[i] && !state.over && (
                   <i className={cx("fas fa-lock", styles.lock)}></i>
                 )}
@@ -183,53 +269,60 @@ export function UndercutBoard({
 
       {/* last hand, played out on a number line (no boxes) */}
       {lastHand && (
-        <div className={styles.reveal} key={state.history.length}>
+        <div className={cx(styles.reveal, dimReveal && styles.revealDim)}>
           <div className={styles.axis}>
-            {/* The crown only ever appears on the number that actually wins the
-                hand — never on a leader who gets undercut — so it can't mislead. */}
-            {step && step.crown === lastHand.winningNumber && (
+            {/* The crown only appears on the number that actually wins — never
+                on a leader who gets undercut, and never on a tie (nobody wins). */}
+            {step && lastHand.winner >= 0 && step.crown === lastHand.winningNumber && (
               <div
-                className={cx(styles.crown, drawHand && styles.crownDraw)}
+                className={styles.crown}
                 style={{ left: `${axisPos(step.crown)}%` }}
               >
                 <i className="fas fa-crown"></i>
               </div>
             )}
             <div className={styles.axisLine} />
+            {/* fixed tick marks — the axis never remounts, so the line holds
+                still while tokens slide between hands */}
             {Array.from({ length: BID_MAX }, (_, i) => {
               const value = i + 1;
-              const bidders = lastHand.bids
-                .map((b, seatIdx) => (b === value ? seatIdx : -1))
-                .filter((s) => s >= 0);
+              const used = lastHand.bids.includes(value);
               return (
-                <div
+                <span
                   key={value}
-                  className={styles.axisSlot}
+                  className={cx(styles.tick, used && styles.tickUsed)}
                   style={{ left: `${axisPos(value)}%` }}
                 >
-                  <span className={styles.tokens}>
-                    {bidders.map((seatIdx) => (
-                      <span
-                        key={seatIdx}
-                        className={cx(
-                          styles.token,
-                          revealDone && lastHand.winner === seatIdx && styles.tokenWinner,
-                          drawHand && value === lastHand.winningNumber && styles.tokenDraw,
-                        )}
-                        style={{
-                          ["--pc" as string]: PLAYER_COLORS[seatIdx],
-                          animationDelay: `${seatIdx * 100}ms`,
-                        }}
-                        title={seats[seatIdx]?.name}
-                      >
-                        {value}
-                      </span>
-                    ))}
-                  </span>
-                  <span className={cx(styles.tick, bidders.length > 0 && styles.tickUsed)}>
-                    {value}
-                  </span>
-                </div>
+                  {value}
+                </span>
+              );
+            })}
+            {/* one token per seat, placed by its bid — when a new hand lands the
+                same token slides to its new number instead of the whole line
+                fading out and back in */}
+            {seats.map((seat, seatIdx) => {
+              const value = lastHand.bids[seatIdx];
+              if (value == null) return null;
+              const stackIdx = lastHand.bids
+                .slice(0, seatIdx)
+                .filter((b) => b === value).length;
+              return (
+                <span
+                  key={seatIdx}
+                  className={cx(
+                    styles.token,
+                    revealDone && lastHand.winner === seatIdx && styles.tokenWinner,
+                    drawHand && value === lastHand.winningNumber && styles.tokenDraw,
+                  )}
+                  style={{
+                    left: `${axisPos(value)}%`,
+                    bottom: `${TOKEN_BASE + stackIdx * TOKEN_STEP}px`,
+                    ["--pc" as string]: PLAYER_COLORS[seatIdx],
+                  }}
+                  title={seat.name}
+                >
+                  {value}
+                </span>
               );
             })}
           </div>
@@ -248,10 +341,12 @@ export function UndercutBoard({
         </div>
       )}
 
-      {/* picking — the pad itself is the prompt; no caption needed */}
+      {/* picking — the pad itself is the prompt; no caption needed. Held back
+          while the last hand is still animating so a fast click can't launch
+          the next hand mid-reveal. */}
       {!state.over && (
         <div className={styles.padArea}>
-          {gate ? (
+          {busy ? null : gate ? (
             <button type="button" className={styles.gate} onClick={onGateOpen}>
               <i className="fas fa-eye-slash"></i> {gate}
             </button>

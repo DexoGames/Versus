@@ -17,11 +17,11 @@ export const GAMES_DATA: GameInfo[] = [
     title: "Gridlock",
     genre: "Territory Strategy",
     blurb:
-      "Dots and boxes on steroids. Snake your chain across the grid, wall off territory, and starve your rivals of moves.",
+      "Draw your line around the grid and gain as much area you can.",
     howToPlay: [
-      "Extend your chain two edges a turn (one on your first). No retracing.",
+      "Extend your line two edges a turn (one on your first). No retracing.",
       "Close a loop to claim the area inside — diagonals count, a triangle is 0.5.",
-      "Hold the most area, or take an unbeatable lead, to win.",
+      "Hold the most area to win.",
     ],
     players: "2–4 players",
     icon: "fa-border-all",
@@ -33,10 +33,10 @@ export const GAMES_DATA: GameInfo[] = [
     title: "Spellout",
     genre: "Word Duel",
     blurb:
-      "Build a word letter by letter. Land the killing letter — the one that finishes a word that can't grow — and you win.",
+      "Build a word letter by letter. If your letter completes a word that can't be extended, you win.",
     howToPlay: [
       "Add one letter a turn to a shared fragment.",
-      "It must still spell toward a real word — a dead letter loses on the spot.",
+      "It must still spell toward a real word. A dead letter loses on the spot.",
       "Finish a word that can't grow any further and you win.",
     ],
     players: "2–3 players",
@@ -49,11 +49,11 @@ export const GAMES_DATA: GameInfo[] = [
     title: "Undercut",
     genre: "Mind-Game Standoff",
     blurb:
-      "Secret numbers, one rule: the higher number wins — unless someone dives more than 1 below it and steals the lot.",
+      "Every turn you pick a number, if the number is adjacent to the opponents then the higher wins. If you undercut by more than 1 then the lowest number wins. You earn as many points as your number.",
     howToPlay: [
-      "Everyone secretly picks 1–10 each hand.",
-      "Higher number wins its value — unless undercut by more than 1. Tie at the top scores nobody.",
-      "Race to 10 points for a round; win enough rounds to take the match.",
+      "Everyone secretly picks 1–10 each turn.",
+      "If adjacent to opponent, higher number wins, otherwise you undercut and lowest wins. Tie scores no one.",
+      "You earn as many points as the number you put forward. Race to 10 points for a round.",
     ],
     players: "2–4 players",
     icon: "fa-arrow-down-1-9",
