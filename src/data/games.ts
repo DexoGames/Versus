@@ -20,7 +20,7 @@ export const GAMES_DATA: GameInfo[] = [
       "Draw your line around the grid and gain as much area you can.",
     howToPlay: [
       "Extend your line two edges a turn (one on your first). No retracing.",
-      "Close a loop to claim the area inside — diagonals count, a triangle is 0.5.",
+      "Close a loop to claim the area inside. Diagonals count (e.g. a triangle is 0.5).",
       "Hold the most area to win.",
     ],
     players: "2–4 players",
