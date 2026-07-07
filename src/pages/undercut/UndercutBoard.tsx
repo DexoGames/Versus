@@ -3,6 +3,7 @@ import { PLAYER_COLORS, type SeatConfig } from "../../games/types";
 import { BID_MAX } from "../../games/undercut/engine";
 import type { RoundRecord, UndercutState } from "../../games/undercut/types";
 import { cx } from "../../lib/cx";
+import { conjugate } from "../../lib/grammar";
 import styles from "./UndercutBoard.module.css";
 
 interface UndercutBoardProps {
@@ -14,7 +15,6 @@ interface UndercutBoardProps {
   padRange: [number, number] | null;
   /** The local bidder's previous bid (0 on a fresh round) — drives lower/hold/higher. */
   padAnchor: number;
-  padLabel: string;
   onBid: (n: number) => void;
   /** Hotseat privacy gate: who must confirm before the pad shows. */
   gate: string | null;
@@ -28,7 +28,7 @@ interface RevealStep {
   label: string;
 }
 
-const STEP_MS = 850;
+const STEP_MS = 520;
 const axisPos = (value: number) => ((value - 1) / (BID_MAX - 1)) * 100;
 
 /**
@@ -74,7 +74,7 @@ function buildRevealSteps(hand: RoundRecord, seats: SeatConfig[]): RevealStep[] 
     kind: "result",
     label:
       hand.winner >= 0
-        ? `${seats[hand.winner]?.name ?? "Player"} banks ${hand.winningNumber} point${hand.winningNumber > 1 ? "s" : ""}`
+        ? `${conjugate(seats[hand.winner]?.name ?? "Player", "bank")} ${hand.winningNumber} point${hand.winningNumber > 1 ? "s" : ""}`
         : `Tie at ${hand.winningNumber} — nobody scores`,
   });
   return steps;
@@ -86,7 +86,6 @@ export function UndercutBoard({
   lockedSeats,
   padRange,
   padAnchor,
-  padLabel,
   onBid,
   gate,
   onGateOpen,
@@ -186,7 +185,9 @@ export function UndercutBoard({
       {lastHand && (
         <div className={styles.reveal} key={state.history.length}>
           <div className={styles.axis}>
-            {step && (
+            {/* The crown only ever appears on the number that actually wins the
+                hand — never on a leader who gets undercut — so it can't mislead. */}
+            {step && step.crown === lastHand.winningNumber && (
               <div
                 className={cx(styles.crown, drawHand && styles.crownDraw)}
                 style={{ left: `${axisPos(step.crown)}%` }}
@@ -247,29 +248,20 @@ export function UndercutBoard({
         </div>
       )}
 
-      {/* bidding */}
+      {/* picking — the pad itself is the prompt; no caption needed */}
       {!state.over && (
         <div className={styles.padArea}>
           {gate ? (
             <button type="button" className={styles.gate} onClick={onGateOpen}>
-              <i className="fas fa-eye-slash"></i> {gate} — tap to bid in secret
+              <i className="fas fa-eye-slash"></i> {gate}
             </button>
           ) : padRange ? (
-            <>
-              <p className={styles.padLabel}>{padLabel}</p>
-              {padAnchor > 0 ? (
-                <ChoicePad
-                  anchor={padAnchor}
-                  range={padRange}
-                  onBid={onBid}
-                />
-              ) : (
-                <LinePad range={padRange} onBid={onBid} />
-              )}
-            </>
-          ) : (
-            <p className={styles.padLabel}>{padLabel}</p>
-          )}
+            padAnchor > 0 ? (
+              <ChoicePad anchor={padAnchor} range={padRange} onBid={onBid} />
+            ) : (
+              <LinePad range={padRange} onBid={onBid} />
+            )
+          ) : null}
         </div>
       )}
 
@@ -282,7 +274,7 @@ export function UndercutBoard({
           >
             <p className={styles.bannerKicker}>Round {banner.round}</p>
             <p className={styles.bannerTitle}>
-              {seats[banner.winner]?.name ?? "Player"} takes the round!
+              {conjugate(seats[banner.winner]?.name ?? "Player", "take")} the round!
             </p>
           </div>
         </div>
@@ -291,7 +283,7 @@ export function UndercutBoard({
   );
 }
 
-/** Round one: the full 1–10 line, high numbers visibly rarer (smaller). */
+/** Round one: the full 1–10 grid — equal keys, 5 per row on small screens. */
 function LinePad({
   range,
   onBid,
@@ -304,15 +296,12 @@ function LinePad({
       {Array.from({ length: BID_MAX }, (_, i) => {
         const n = i + 1;
         const enabled = n >= range[0] && n <= range[1];
-        const shrink = Math.max(0, n - 5);
-        const size = 54 - shrink * 4;
         return (
           <button
             key={n}
             type="button"
             className={styles.lineKey}
             disabled={!enabled}
-            style={{ width: size, height: size, fontSize: `${1.35 - shrink * 0.08}rem` }}
             onClick={() => onBid(n)}
           >
             {n}
@@ -325,7 +314,7 @@ function LinePad({
 
 /**
  * After round one you may only move ±1, so the choice is really lower / hold /
- * higher. Show exactly those, each visually distinct.
+ * higher. The arrow and the number say it all — no captions.
  */
 function ChoicePad({
   anchor,
@@ -336,15 +325,10 @@ function ChoicePad({
   range: [number, number];
   onBid: (n: number) => void;
 }) {
-  const all: Array<{
-    n: number;
-    kind: "lower" | "hold" | "higher";
-    icon: string;
-    label: string;
-  }> = [
-    { n: anchor - 1, kind: "lower", icon: "fa-caret-down", label: "Lower" },
-    { n: anchor, kind: "hold", icon: "fa-minus", label: "Hold" },
-    { n: anchor + 1, kind: "higher", icon: "fa-caret-up", label: "Higher" },
+  const all: Array<{ n: number; kind: "lower" | "hold" | "higher"; icon: string }> = [
+    { n: anchor - 1, kind: "lower", icon: "fa-caret-down" },
+    { n: anchor, kind: "hold", icon: "fa-minus" },
+    { n: anchor + 1, kind: "higher", icon: "fa-caret-up" },
   ];
   const choices = all.filter((c) => c.n >= range[0] && c.n <= range[1]);
 
@@ -359,7 +343,6 @@ function ChoicePad({
         >
           <i className={`fas ${c.icon} ${styles.choiceIcon}`}></i>
           <span className={styles.choiceNum}>{c.n}</span>
-          <span className={styles.choiceLabel}>{c.label}</span>
         </button>
       ))}
     </div>

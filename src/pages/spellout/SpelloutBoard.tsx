@@ -34,9 +34,6 @@ export function SpelloutBoard({ state, remaining, canPlay, onPlay }: SpelloutBoa
   return (
     <div className={styles.board}>
       <div className={cx(styles.fragment, busted && styles.fragmentBust)}>
-        {tiles.length === 0 && !state.deadLetter && (
-          <span className={styles.placeholder}>first letter…</span>
-        )}
         {tiles.map((letter, i) => (
           <span
             key={i}

@@ -47,12 +47,12 @@ export const GAMES_DATA: GameInfo[] = [
   {
     id: "undercut",
     title: "Undercut",
-    genre: "Mind-Game Bidding",
+    genre: "Mind-Game Standoff",
     blurb:
-      "Secret bids, one rule: the higher number wins — unless someone dives more than 1 below it and steals the lot.",
+      "Secret numbers, one rule: the higher number wins — unless someone dives more than 1 below it and steals the lot.",
     howToPlay: [
-      "Everyone secretly bids 1–10 each hand.",
-      "Higher bid wins its value — unless undercut by more than 1. Tie at the top scores nobody.",
+      "Everyone secretly picks 1–10 each hand.",
+      "Higher number wins its value — unless undercut by more than 1. Tie at the top scores nobody.",
       "Race to 10 points for a round; win enough rounds to take the match.",
     ],
     players: "2–4 players",

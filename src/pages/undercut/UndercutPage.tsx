@@ -245,7 +245,6 @@ function UndercutLocalMatch({
         lockedSeats={state.pendingBids.map((b) => b !== null)}
         padRange={padRange}
         padAnchor={humanTurn ? state.lastBids[currentPlayer] : 0}
-        padLabel={humanTurn ? `${activeSeat.name}, bid in secret` : "Opponents are bidding…"}
         onBid={(n) => {
           setGateOpened(null);
           match.submitMove(n);
@@ -353,7 +352,7 @@ function UndercutOnlineMatch({
         const reveal = reveals[String(i)];
         const commit = doc.commits?.[String(i)];
         if (!reveal || !commit || (await hashBid(reveal.bid, reveal.salt)) !== commit) {
-          setVerifyError(`Bid verification failed for seat ${i + 1}`);
+          setVerifyError(`Number verification failed for seat ${i + 1}`);
           return;
         }
       }
@@ -395,7 +394,6 @@ function UndercutOnlineMatch({
         lockedSeats={lockedSeats}
         padRange={padRange}
         padAnchor={!winResult.over && !myCommitted ? state.lastBids[room.mySeat] : 0}
-        padLabel={myCommitted ? "Waiting for other bids…" : "Bid in secret"}
         onBid={(n) => void placeBid(n)}
         gate={null}
         onGateOpen={() => {}}

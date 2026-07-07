@@ -39,11 +39,23 @@ export interface DifficultyInfo {
   tagline: string;
 }
 
+/**
+ * CPU opponent names — EDIT HERE to rename the computer players. One name per
+ * difficulty tier (Easy → Extreme). This is the single place the names live;
+ * changing a string here updates every game's lobby, chips and status text.
+ */
+export const CPU_NAMES: Record<Difficulty, string> = {
+  1: "Isaac", // Easy
+  2: "Bob", // Medium
+  3: "Vera", // Hard
+  4: "Dexter", // Extreme
+};
+
 export const DIFFICULTIES: DifficultyInfo[] = [
-  { level: 1, label: "Easy", persona: "Isaac", tagline: "Plays on vibes. Occasionally brilliant by accident." },
-  { level: 2, label: "Medium", persona: "Bob", tagline: "Solid fundamentals. Punishes lazy moves." },
-  { level: 3, label: "Hard", persona: "Vera", tagline: "Thinks several moves ahead. Rarely blinks." },
-  { level: 4, label: "Extreme", persona: "Dexter", tagline: "Near-perfect play. Bring a plan." },
+  { level: 1, label: "Easy", persona: CPU_NAMES[1], tagline: "Plays on vibes. Occasionally brilliant by accident." },
+  { level: 2, label: "Medium", persona: CPU_NAMES[2], tagline: "Solid fundamentals. Punishes lazy moves." },
+  { level: 3, label: "Hard", persona: CPU_NAMES[3], tagline: "Thinks several moves ahead. Rarely blinks." },
+  { level: 4, label: "Extreme", persona: CPU_NAMES[4], tagline: "Near-perfect play. Bring a plan." },
 ];
 
 export function difficultyInfo(level: Difficulty): DifficultyInfo {

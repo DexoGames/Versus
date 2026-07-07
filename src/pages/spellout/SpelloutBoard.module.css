@@ -18,13 +18,6 @@
     min-height: 74px;
 }
 
-.placeholder {
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
-    color: var(--bone-dim);
-    align-self: center;
-}
-
 .tile {
     display: flex;
     align-items: center;

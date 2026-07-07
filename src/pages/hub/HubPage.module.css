@@ -4,76 +4,7 @@
     min-height: calc(100vh - 56px);
 }
 
-/* --- compact hero: one band, title + pitch side by side --- */
-
-.hero {
-    border-bottom: 2px solid var(--line-on-black);
-}
-
-.heroInner {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 40px 40px 34px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 24px 48px;
-    flex-wrap: wrap;
-}
-
-.heroTitle {
-    font-family: var(--font-display);
-    font-size: clamp(2.6rem, 6vw, 4.2rem);
-    line-height: 0.92;
-    text-transform: uppercase;
-    letter-spacing: 0.01em;
-    color: var(--bone);
-}
-
-.heroDot {
-    color: var(--orange);
-}
-
-.heroSide {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    max-width: 460px;
-}
-
-.heroSub {
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    line-height: 1.65;
-    color: var(--bone-dim);
-}
-
-.heroMeta {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.heroMeta span {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    font-family: var(--font-mono);
-    font-weight: 700;
-    font-size: 0.62rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    padding: 6px 11px;
-    border: 2px solid var(--line-on-black);
-    color: var(--bone-dim);
-}
-
-.heroMeta i {
-    color: var(--orange);
-    font-size: 0.7rem;
-}
-
-/* --- the games ARE the page --- */
+/* --- the games ARE the page (navbar carries the name; no hero) --- */
 
 .gamesSection {
     max-width: 1280px;
@@ -328,10 +259,6 @@
 @media (max-width: 900px) {
     .grid {
         grid-template-columns: 1fr;
-    }
-
-    .heroInner {
-        padding: 30px 18px 26px;
     }
 
     .gamesSection {

@@ -1,5 +1,6 @@
 import { Button } from "../Button/Button";
 import { PLAYER_COLORS, type SeatConfig } from "../../games/types";
+import { conjugate } from "../../lib/grammar";
 import styles from "./GameOverCard.module.css";
 
 interface GameOverCardProps {
@@ -24,7 +25,7 @@ export function GameOverCard({
   const isDraw = winners.length === 0 || winners.length === seats.length;
   const title =
     winners.length === 1
-      ? `${seats[winners[0]]?.name ?? "Player"} wins!`
+      ? `${conjugate(seats[winners[0]]?.name ?? "Player", "win")}!`
       : isDraw
         ? "Draw!"
         : `${winners.map((w) => seats[w]?.name ?? "Player").join(" & ")} win!`;

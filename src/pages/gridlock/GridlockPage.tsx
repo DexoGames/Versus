@@ -13,9 +13,9 @@ import { GameOverCard } from "../../components/game/GameOverCard";
 import { LobbyShell, type LobbyMode } from "../../components/game/LobbyShell";
 import { MatchLayout } from "../../components/game/MatchLayout";
 import { OptionRow } from "../../components/game/OptionRow";
-import { PlayerChip } from "../../components/game/PlayerChip";
 import { GamePageFrame } from "../GamePageFrame";
 import { GridlockBoard } from "./GridlockBoard";
+import { OpeningBanner } from "./OpeningBanner";
 
 const GAME = GAMES_DATA.find((g) => g.id === "gridlock")!;
 
@@ -103,9 +103,8 @@ export function GridlockPage() {
       <OptionRow
         label="Grid size"
         options={[
-          { value: 5, label: "5 × 5" },
+          { value: 4, label: "4 × 4" },
           { value: 6, label: "6 × 6" },
-          { value: 7, label: "7 × 7" },
         ]}
         value={gridSize}
         onChange={setGridSize}
@@ -218,32 +217,19 @@ function GridlockMatch({
     return gridlockEngine.getLegalMoves(state, currentPlayer);
   }, [state, currentPlayer, winResult.over, thinking, activeSeat.kind]);
 
-  const isOpening = state.chains.every((c) => c.length === 1);
-  const halfMove = isOpening
-    ? "opening move"
-    : state.turnCount === 0
-      ? "1st of two moves"
-      : "2nd of two moves";
+  // The status row narrates only what the board can't show: a CPU thinking or
+  // a remote turn. On human turns it hosts the opening read (blank until the
+  // opening is identifiable — the row's space is always reserved).
   const status = winResult.over
     ? (WIN_REASONS[winResult.reason ?? ""] ?? "Game over")
     : thinking
       ? `${activeSeat.name} is thinking…`
       : activeSeat.kind === "human"
-        ? `${activeSeat.name} — ${halfMove}`
+        ? <OpeningBanner state={state} seats={setup.seats} />
         : `Waiting for ${activeSeat.name}…`;
 
   return (
     <MatchLayout
-      players={setup.seats.map((seat, i) => (
-        <PlayerChip
-          key={i}
-          seat={seat}
-          index={i}
-          score={state.scores[i]}
-          active={!winResult.over && currentPlayer === i}
-          won={winResult.over && winResult.winners.includes(i)}
-        />
-      ))}
       status={status}
       overlay={
         winResult.over ? (
@@ -257,7 +243,14 @@ function GridlockMatch({
         ) : undefined
       }
     >
-      <GridlockBoard state={state} legalMoves={legalMoves} onMove={match.submitMove} />
+      <GridlockBoard
+        state={state}
+        legalMoves={legalMoves}
+        onMove={match.submitMove}
+        seats={setup.seats}
+        winners={winResult.winners}
+        over={winResult.over}
+      />
     </MatchLayout>
   );
 }

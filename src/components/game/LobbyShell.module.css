@@ -279,8 +279,29 @@
     }
 }
 
+/* compact modes on small screens: three abreast, icon + label only */
 @media (max-width: 640px) {
     .modes {
-        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .mode {
+        align-items: center;
+        gap: 8px;
+        padding: 12px 6px;
+    }
+
+    .modeIcon {
+        width: 30px;
+        height: 30px;
+        font-size: 0.9rem;
+    }
+
+    .modeLabel {
+        font-size: 0.78rem;
+    }
+
+    .modeHint {
+        display: none;
     }
 }

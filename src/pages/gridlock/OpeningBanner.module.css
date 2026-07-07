@@ -1,0 +1,34 @@
+.line {
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    animation: lineIn 0.35s ease both;
+}
+
+@keyframes lineIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.pair {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 7px;
+}
+
+.who {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.playName {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--bone-dim);
+}

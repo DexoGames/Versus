@@ -51,20 +51,20 @@
 
 .pips {
     display: flex;
-    gap: 5px;
+    gap: 6px;
 }
 
+/* round wins: bold, square markers — hollow until won, then filled solid */
 .pip {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    border: 2px solid var(--line-on-black);
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--bone-dim);
     background: transparent;
-    transition: background 0.3s ease, border-color 0.3s ease;
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .pipWon {
-    animation: pipPop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
+    animation: pipPop 0.4s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
 
 @keyframes pipPop {
@@ -161,7 +161,7 @@
     color: var(--pc);
     font-family: var(--font-display);
     font-size: 1rem;
-    animation: tokenDrop 0.4s cubic-bezier(0.2, 1.3, 0.4, 1) backwards;
+    animation: tokenDrop 0.28s cubic-bezier(0.2, 1.3, 0.4, 1) backwards;
 }
 
 @keyframes tokenDrop {
@@ -172,8 +172,7 @@
 .tokenWinner {
     background: var(--pc);
     color: var(--black);
-    box-shadow: 0 0 18px color-mix(in srgb, var(--pc) 60%, transparent);
-    animation: tokenSlam 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
+    animation: tokenSlam 0.3s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
 
 @keyframes tokenSlam {
@@ -206,9 +205,14 @@
     transform: translateX(-50%);
     color: var(--gold);
     font-size: 1.1rem;
-    transition: left 0.45s cubic-bezier(0.3, 1.2, 0.4, 1);
-    text-shadow: 0 0 12px rgba(232, 185, 35, 0.55);
     z-index: 2;
+    animation: crownIn 0.3s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+@keyframes crownIn {
+    0% { transform: translateX(-50%) translateY(-8px) scale(0.6); opacity: 0; }
+    60% { transform: translateX(-50%) translateY(0) scale(1.2); opacity: 1; }
+    100% { transform: translateX(-50%) translateY(0) scale(1); }
 }
 
 .crownDraw {
@@ -261,44 +265,36 @@
     align-items: center;
     gap: 16px;
     min-height: 120px;
-}
-
-.padLabel {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--bone-dim);
-}
-
-/* round one: full number line, borderless keys sitting on a baseline */
-.linePad {
-    display: flex;
-    gap: 6px;
-    align-items: flex-end;
     justify-content: center;
-    flex-wrap: wrap;
-    border-bottom: 2px solid var(--line-on-black);
-    padding-bottom: 10px;
+}
+
+/* round one: a grid of equal keys — 10 across, 5×2 on small screens */
+.linePad {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 8px;
+    width: 100%;
+    max-width: 560px;
 }
 
 .lineKey {
     display: flex;
     align-items: center;
     justify-content: center;
+    aspect-ratio: 1;
     background: transparent;
-    border: none;
+    border: 2px solid var(--line-on-black);
     color: var(--bone);
     font-family: var(--font-display);
+    font-size: 1.15rem;
     cursor: pointer;
-    border-radius: 50%;
-    transition: color 0.12s ease, background 0.12s ease, transform 0.12s ease;
+    transition: color 0.12s ease, background 0.12s ease, border-color 0.12s ease;
 }
 
 .lineKey:hover:not(:disabled) {
     background: var(--accent);
+    border-color: var(--accent);
     color: var(--accent-ink);
-    transform: translateY(-4px);
 }
 
 .lineKey:disabled {
@@ -306,52 +302,46 @@
     cursor: default;
 }
 
-/* ±1 rounds: the three real choices, each distinct */
+/* ±1 rounds: the three real choices — arrow + number, nothing else */
 .choicePad {
     display: flex;
-    gap: 14px;
+    gap: 12px;
     align-items: stretch;
+    width: 100%;
+    max-width: 380px;
+    justify-content: center;
 }
 
 .choice {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    width: 96px;
+    justify-content: center;
+    gap: 6px;
+    flex: 1;
+    max-width: 110px;
     padding: 14px 10px;
     background: transparent;
     border: 2px solid var(--pick);
-    border-top-width: 4px;
     color: var(--bone);
     cursor: pointer;
-    transition: background 0.14s ease, transform 0.14s ease;
+    transition: background 0.14s ease;
 }
 
 .choice:hover {
-    transform: translateY(-4px);
-    background: color-mix(in srgb, var(--pick) 14%, transparent);
+    background: color-mix(in srgb, var(--pick) 16%, transparent);
 }
 
 .choiceIcon {
     color: var(--pick);
-    font-size: 1rem;
+    font-size: 1.05rem;
 }
 
 .choiceNum {
     font-family: var(--font-display);
-    font-size: 1.9rem;
+    font-size: 2rem;
     line-height: 1;
     color: var(--pick);
-}
-
-.choiceLabel {
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--bone-dim);
 }
 
 .lower {
@@ -454,5 +444,15 @@
         width: 26px;
         height: 26px;
         font-size: 0.82rem;
+    }
+
+    /* two comfortable rows of five — big, even tap targets */
+    .linePad {
+        grid-template-columns: repeat(5, 1fr);
+        max-width: 320px;
+    }
+
+    .lineKey {
+        font-size: 1.3rem;
     }
 }

@@ -63,24 +63,7 @@ export function HubPage() {
     <>
       <Navbar />
       <main className={styles.main}>
-        <header className={styles.hero}>
-          <div className={styles.heroInner}>
-            <h1 className={styles.heroTitle}>
-              Versus<span className={styles.heroDot}>.</span>
-            </h1>
-            <div className={styles.heroSide}>
-              <p className={styles.heroSub}>
-                Play a collection of brand new head-to-head games that challenge your intellect.
-              </p>
-              <div className={styles.heroMeta}>
-                <span><i className="fas fa-robot"></i> vs CPU</span>
-                <span><i className="fas fa-couch"></i> Hotseat</span>
-                <span><i className="fas fa-wifi"></i> Online</span>
-              </div>
-            </div>
-          </div>
-        </header>
-
+        {/* No hero — the navbar already says who we are; the games ARE the page. */}
         <section className={styles.gamesSection} id="games">
           <div className={styles.grid}>
             {GAMES_DATA.map((game, i) => (

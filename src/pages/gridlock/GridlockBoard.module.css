@@ -1,8 +1,17 @@
+/* the board sizes to the smaller of column width, 560px, or 60vh so board +
+   badge rows never run off-screen (and the game-over overlay covers it all) */
+.wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: min(100%, 560px, 60vh);
+    margin: 0 auto;
+}
+
 .board {
-    width: 100%;
-    max-width: 560px;
-    height: auto;
     display: block;
+    width: 100%;
+    height: auto;
 }
 
 .lattice {
@@ -14,20 +23,39 @@
     fill: var(--bone-dim);
 }
 
-.head {
-    animation: headPulse 1.6s ease-in-out infinite;
-}
-
-@keyframes headPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.55; }
-}
-
 .chain {
     fill: none;
     stroke-width: 5;
     stroke-linecap: square;
     stroke-linejoin: miter;
+    opacity: 0.72;
+}
+
+/* the freshest segments, drawn full-strength over the slightly faded base */
+.recent {
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+    opacity: 1;
+}
+
+.headRing {
+    fill: none;
+    stroke: var(--bone);
+    stroke-width: 2;
+    opacity: 0.9;
+    animation: headPulse 1.6s ease-in-out infinite;
+}
+
+.head {
+    stroke: var(--black);
+    stroke-width: 2;
+}
+
+@keyframes headPulse {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 0.35; }
 }
 
 .cell {
@@ -64,25 +92,24 @@
     animation: scorePop 1.4s cubic-bezier(0.2, 1, 0.3, 1) forwards;
 }
 
+/* fade in fully in place, hold, then drift up while fading out — no movement
+   during the fade-in, which is what made the old version look janky */
 @keyframes scorePop {
     0% {
         opacity: 0;
-        transform: translateY(10px) scale(0.6);
+        transform: translateY(0);
     }
-    18% {
+    15% {
         opacity: 1;
-        transform: translateY(0) scale(1.15);
+        transform: translateY(0);
     }
-    30% {
-        transform: translateY(-2px) scale(1);
-    }
-    75% {
+    60% {
         opacity: 1;
-        transform: translateY(-14px) scale(1);
+        transform: translateY(0);
     }
     100% {
         opacity: 0;
-        transform: translateY(-26px) scale(1);
+        transform: translateY(-18px);
     }
 }
 
@@ -110,4 +137,77 @@
 @keyframes targetPulse {
     0%, 100% { stroke-opacity: 0.9; }
     50% { stroke-opacity: 0.35; }
+}
+
+/* ---- score badge rows (in flow above/below the board, corner-aligned) ---- */
+
+.badgeRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+}
+
+.badgeRow > span {
+    display: flex;
+    gap: 10px;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 14px;
+    background: var(--black-soft);
+    border: 2px solid var(--pc);
+}
+
+.badgeName {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--pc);
+    max-width: 110px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.badgeScore {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--bone);
+}
+
+.badgeActive {
+    background: var(--pc);
+}
+
+.badgeActive .badgeName,
+.badgeActive .badgeScore {
+    color: var(--black);
+}
+
+.badgeWon {
+    border-color: var(--gold);
+}
+
+@media (max-width: 520px) {
+    .badge {
+        padding: 4px 10px;
+        gap: 8px;
+    }
+
+    .badgeScore {
+        font-size: 1.2rem;
+    }
+
+    .badgeName {
+        font-size: 0.6rem;
+        max-width: 80px;
+    }
 }
